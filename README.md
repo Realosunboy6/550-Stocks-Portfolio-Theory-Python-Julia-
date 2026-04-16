@@ -1,6 +1,25 @@
 # 550 Stocks Portfolio Theory
 
-This repository contains portfolio optimization analysis using matrix algebra for 550 stocks across multiple sectors.
+Portfolio optimization analysis using matrix algebra for 550 stocks across multiple sectors, implemented in both Python and Julia.
+
+## Repository Structure
+
+```
+notebooks/
+  python/
+    part1_matrix_algebra.ipynb          # Data loading, preprocessing, portfolio metrics
+    part2_matrix_algebra.ipynb          # Portfolio optimization (scipy.optimize)
+    portfolio_optimization_colab.ipynb  # Full workflow — Google Colab
+    portfolio_optimization_vscode.ipynb # Full workflow — VS Code
+  julia/
+    part1_matrix_algebra.ipynb          # Data loading and preprocessing (Julia)
+    part2_matrix_algebra.ipynb          # Portfolio optimization (Optim.jl)
+  utilities/
+    pull_data_2026.ipynb                # Stock data retrieval for 2026
+docs/
+  portfolio_optimization_superprompt.docx  # Prompt engineering reference guide
+README.md
+```
 
 ## Overview
 
@@ -11,37 +30,21 @@ The project implements Modern Portfolio Theory (MPT) concepts including:
 - Sharpe ratio optimization
 - Train/test validation of optimized portfolios
 
-## Files
-
-### Python Implementation
-- `part1_Matrix_algebra.ipynb` - Data loading, preprocessing, and basic portfolio metrics
-- `part2_Matrix_algebra.ipynb` - Portfolio optimization using scipy.optimize
-
-### Julia Implementation
-- `part1_Matrix_algebra_julia.ipynb` - Data loading, preprocessing, and basic portfolio metrics (Julia version)
-- `part2_Matrix_algebra_julia.ipynb` - Portfolio optimization using Optim.jl (Julia version)
-
 ## Part 1: Data Processing and Portfolio Metrics
 
-**Key Features:**
 - Load stock data from multiple sector CSV files
-- Calculate log returns for each stock
-- Create return matrix with dates as rows and tickers as columns
+- Calculate log returns: `ln(P_t / P_{t-1})`
+- Build return matrix (dates × tickers)
 - Compute correlation and covariance matrices
 - Verify positive semi-definite properties
-- Calculate portfolio metrics (mean, variance, Sharpe ratio)
 - Visualize cumulative returns
 
 ## Part 2: Portfolio Optimization
 
-**Key Features:**
-- Define Sharpe ratio optimization objective
-- Implement multiple optimization approaches:
-  - L-BFGS-B with box constraints
-  - SLSQP with equality constraints (Python) / IPNewton (Julia)
-- Train/test split for validation
-- Select top volatile assets for optimization
-- Visualize optimized portfolio performance
+- Maximize Sharpe ratio: `(E[R] - R_f) / σ` where R_f = 0
+- Constraints: weights sum to 1, no short selling (weights ≥ 0)
+- Approaches: L-BFGS-B (box) and SLSQP / IPNewton (equality)
+- Train/test split for out-of-sample validation
 - Compare optimized vs equal-weighted portfolios
 
 ## Requirements
@@ -61,40 +64,28 @@ Pkg.add(["CSV", "DataFrames", "LinearAlgebra", "Statistics", "Dates", "PlotlyJS"
 
 ### Python
 ```bash
-jupyter notebook part1_Matrix_algebra.ipynb
-jupyter notebook part2_Matrix_algebra.ipynb
+jupyter notebook notebooks/python/part1_matrix_algebra.ipynb
+jupyter notebook notebooks/python/part2_matrix_algebra.ipynb
 ```
 
 ### Julia
 ```bash
-jupyter notebook part1_Matrix_algebra_julia.ipynb
-jupyter notebook part2_Matrix_algebra_julia.ipynb
+jupyter notebook notebooks/julia/part1_matrix_algebra.ipynb
+jupyter notebook notebooks/julia/part2_matrix_algebra.ipynb
 ```
 
 ## Data Format
 
-The code expects CSV files with the following columns:
-- `Date` - Trading date
-- `Ticker` - Stock ticker symbol
-- `Close` - Closing price
-- `Sector` - Market sector
+CSV files should include:
 
-## Key Concepts
+| Column | Description |
+|--------|-------------|
+| `Date` | Trading date |
+| `Ticker` | Stock ticker symbol |
+| `Close` | Closing price |
+| `Sector` | Market sector |
 
-### Log Returns
-Log returns are calculated as: `ln(P_t / P_{t-1})`
-
-### Sharpe Ratio
-Risk-adjusted return metric: `(E[R] - R_f) / σ` where R_f = 0
-
-### Portfolio Optimization
-Maximize Sharpe ratio subject to:
-- Weights sum to 1
-- No short selling (weights ≥ 0)
-
-## Conversion Notes
-
-The Julia implementation provides equivalent functionality to the Python version with the following key library mappings:
+## Library Mappings: Python → Julia
 
 | Python | Julia |
 |--------|-------|
@@ -105,4 +96,4 @@ The Julia implementation provides equivalent functionality to the Python version
 
 ## License
 
-This project is provided for educational and research purposes.
+Provided for educational and research purposes.
