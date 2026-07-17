@@ -1,108 +1,99 @@
-# 550 Stocks Portfolio Theory
+# portlab — Free, Open-Source Portfolio Visualizer Alternative
 
-This repository contains portfolio optimization analysis using matrix algebra for 550 stocks across multiple sectors.
+**Runs entirely in Google Colab. Works on your phone. Everything is free.**
 
-## Overview
+Every tool family from [portfoliovisualizer.com](https://www.portfoliovisualizer.com) rebuilt as open Python you can inspect, extend, and run anywhere — plus capabilities the website puts behind its $30–55/month paywall or doesn't have at all.
 
-The project implements Modern Portfolio Theory (MPT) concepts including:
-- Log returns calculation
-- Correlation and covariance matrix analysis
-- Portfolio risk and return calculations
-- Sharpe ratio optimization
-- Train/test validation of optimized portfolios
+## 🚀 Open a tool (tap a badge — that's it)
 
-## Files
+| Tool | What it does | Open in Colab |
+|---|---|---|
+| 📈 **Backtest Portfolio** | Growth, CAGR/IRR, drawdowns, rolling returns, cashflows, band rebalancing, benchmark, real returns | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Realosunboy6/550-Stocks-Portfolio-Theory-Python-Julia-/blob/main/notebooks/01_backtest_portfolio.ipynb) |
+| 🎯 **Optimization & Efficient Frontier** | GMV, Max Sharpe, risk parity, CVaR, Sortino, Kelly, Omega, min-drawdown, Black-Litterman, resampling | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Realosunboy6/550-Stocks-Portfolio-Theory-Python-Julia-/blob/main/notebooks/02_optimization.ipynb) |
+| 🎲 **Monte Carlo / Retirement** | 5 return models, 5 withdrawal rules, success probability, percentile fan charts | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Realosunboy6/550-Stocks-Portfolio-Theory-Python-Julia-/blob/main/notebooks/03_monte_carlo.ipynb) |
+| 🧬 **Factor Analysis** | CAPM/FF3/Carhart/FF5+Mom regressions, Ken French data auto-download, rolling exposures | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Realosunboy6/550-Stocks-Portfolio-Theory-Python-Julia-/blob/main/notebooks/04_factor_analysis.ipynb) |
+| 🔬 **Asset Analytics** | Correlation matrices (static + rolling), autocorrelation, cointegration, fund comparison | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Realosunboy6/550-Stocks-Portfolio-Theory-Python-Julia-/blob/main/notebooks/05_asset_analytics.ipynb) |
+| ⚡ **Tactical Models** | MA timing (incl. crossover + multi-period), dual momentum, relative strength, target vol, seasonal — with current signals | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Realosunboy6/550-Stocks-Portfolio-Theory-Python-Julia-/blob/main/notebooks/06_tactical_models.ipynb) |
+| 🗂️ **Data Explorer** | Browse the 550-stock / 300-ETF universe, cache prices to Google Drive | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Realosunboy6/550-Stocks-Portfolio-Theory-Python-Julia-/blob/main/notebooks/00_data_explorer.ipynb) |
+| 🏭 **Full 550-Stock Pipeline** | Walk-forward backtest of 6 optimizer strategies with transaction costs + stress tests | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Realosunboy6/550-Stocks-Portfolio-Theory-Python-Julia-/blob/main/notebooks/07_full_550_pipeline.ipynb) |
 
-### Python Implementation
-- `part1_Matrix_algebra.ipynb` - Data loading, preprocessing, and basic portfolio metrics
-- `part2_Matrix_algebra.ipynb` - Portfolio optimization using scipy.optimize
+**Quickstart:** tap a badge → edit the form fields (they render as native inputs in the Colab phone app) → *Runtime → Run all*. First run installs `portlab` (~1 min); price data caches to Google Drive so reruns are instant.
 
-### Julia Implementation
-- `part1_Matrix_algebra_julia.ipynb` - Data loading, preprocessing, and basic portfolio metrics (Julia version)
-- `part2_Matrix_algebra_julia.ipynb` - Portfolio optimization using Optim.jl (Julia version)
+## Why this beats the website
 
-## Part 1: Data Processing and Portfolio Metrics
+| | Portfolio Visualizer | portlab |
+|---|---|---|
+| Price | Free tier limited; $30–55/mo for exports, saving, signals | **$0, forever** |
+| Assets per analysis | 15 (free) / 150 (paid) | **Unlimited** |
+| Data frequency | Monthly | **Daily** (or any yfinance interval) |
+| Asset coverage | US-centric fund database | **Anything on Yahoo Finance** — global stocks, ETFs, crypto |
+| Covariance estimation | Sample | **Ledoit-Wolf shrinkage, EWMA** |
+| Optimization validation | In-sample | **Walk-forward out-of-sample with transaction costs** |
+| Tactical model signals | Paid feature | **Free** (see notebook 06's last cell) |
+| Fat-tail simulation | Not offered | **Student-t + block bootstrap Monte Carlo** |
+| Reproducibility | Black box | **Every formula is open source in this repo** |
+| Saving / export | Paid feature | Notebooks + Drive cache; export anything with pandas |
 
-**Key Features:**
-- Load stock data from multiple sector CSV files
-- Calculate log returns for each stock
-- Create return matrix with dates as rows and tickers as columns
-- Compute correlation and covariance matrices
-- Verify positive semi-definite properties
-- Calculate portfolio metrics (mean, variance, Sharpe ratio)
-- Visualize cumulative returns
+Free data sources: [yfinance](https://github.com/ranaroussi/yfinance) (prices), [Ken French library](https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html) (factors), [FRED](https://fred.stlouisfed.org) (CPI, T-bills), [Shiller/Yale](http://www.econ.yale.edu/~shiller/data.htm) (CAPE).
 
-## Part 2: Portfolio Optimization
+## The `portlab` package
 
-**Key Features:**
-- Define Sharpe ratio optimization objective
-- Implement multiple optimization approaches:
-  - L-BFGS-B with box constraints
-  - SLSQP with equality constraints (Python) / IPNewton (Julia)
-- Train/test split for validation
-- Select top volatile assets for optimization
-- Visualize optimized portfolio performance
-- Compare optimized vs equal-weighted portfolios
+All the math lives in an installable package (`src/portlab/`) — the notebooks are thin forms on top.
 
-## Requirements
-
-### Python
 ```bash
-pip install pandas numpy scipy plotly jupyter
+pip install "portlab @ git+https://github.com/Realosunboy6/550-Stocks-Portfolio-Theory-Python-Julia-.git"
 ```
 
-### Julia
-```julia
-using Pkg
-Pkg.add(["CSV", "DataFrames", "LinearAlgebra", "Statistics", "Dates", "PlotlyJS", "Optim", "Plots"])
+```python
+from portlab import backtest_portfolio, monte_carlo, optimize, plots
+from portlab.data import get_returns
+
+rets = get_returns(["VTI", "TLT", "GLD"], "2010-01-01")
+result = backtest_portfolio(rets, {"VTI": 0.6, "TLT": 0.3, "GLD": 0.1},
+                            cashflow=500, rebalance="annually")
+result.summary()                      # CAGR, Sharpe, Sortino, drawdowns, IRR...
+plots.growth_chart(result.returns)    # interactive plotly
 ```
 
-## Usage
+| Module | Contents |
+|---|---|
+| `portlab.data` | Cached yfinance prices, 737-ticker curated universe, asset-class proxies, Ken French factors, FRED macro, Shiller CAPE |
+| `portlab.metrics` | CAGR, IRR, Sharpe, Sortino, Calmar, Omega, drawdown tables, VaR/CVaR, capture ratios, rolling/annual tables |
+| `portlab.optimize` | Mean-variance + frontier, risk parity, min-CVaR (LP), max Sortino, Kelly, Omega, min max-drawdown (LP), tracking error, info ratio, Black-Litterman, Michaud resampling, group constraints, transaction costs |
+| `portlab.backtest` | Target-weight backtests with cashflows/rebalancing, walk-forward `RollingBacktest`, stress episodes & shock scenarios |
+| `portlab.montecarlo` | Bootstrap/block/normal/Student-t/statistical models, 5 withdrawal rules, success probabilities |
+| `portlab.factor` | CAPM → FF5+Mom regressions (Newey-West), rolling exposures, multi-fund comparison |
+| `portlab.analytics` | Correlations, autocorrelation, cointegration, performance tables |
+| `portlab.tactical` | MA/crossover/multi-period timing, dual momentum, relative strength, target vol, seasonal, CAPE switch — all evaluated lag-1, cost-aware |
 
-### Python
-```bash
-jupyter notebook part1_Matrix_algebra.ipynb
-jupyter notebook part2_Matrix_algebra.ipynb
-```
+**Development:** `pip install -e ".[dev]" && pytest` (62 tests, no network needed) · `python scripts/smoke_notebooks.py` runs every notebook headlessly on synthetic data.
 
-### Julia
-```bash
-jupyter notebook part1_Matrix_algebra_julia.ipynb
-jupyter notebook part2_Matrix_algebra_julia.ipynb
-```
+**Honest caveats:** yfinance adjusted prices are survivorship-biased for delisted stocks and revise over time; optimizers are only as good as their inputs (that's why Ledoit-Wolf, resampling, and walk-forward validation are defaults here); tactical backtests are experiments, not trading advice. Nothing in this repo is investment advice.
 
-## Data Format
+---
 
-The code expects CSV files with the following columns:
-- `Date` - Trading date
-- `Ticker` - Stock ticker symbol
-- `Close` - Closing price
-- `Sector` - Market sector
+## 📚 Archive — original coursework
 
-## Key Concepts
+The notebooks below are the original matrix-algebra coursework this repo started from, kept intact (the new `portlab` package supersedes but does not replace them).
 
-### Log Returns
-Log returns are calculated as: `ln(P_t / P_{t-1})`
+<details>
+<summary>550 Stocks Portfolio Theory — Python & Julia matrix algebra notebooks</summary>
 
-### Sharpe Ratio
-Risk-adjusted return metric: `(E[R] - R_f) / σ` where R_f = 0
+Modern Portfolio Theory implemented from scratch: log returns, correlation/covariance matrices (with positive semi-definiteness checks), portfolio risk/return, Sharpe-ratio optimization (L-BFGS-B, SLSQP / Optim.jl IPNewton), and train/test validation on ~550 stocks across 11 GICS sectors.
 
-### Portfolio Optimization
-Maximize Sharpe ratio subject to:
-- Weights sum to 1
-- No short selling (weights ≥ 0)
+| File | Language | Contents |
+|---|---|---|
+| `part1_Matrix_algebra.ipynb` | Python | Data loading, log returns, corr/cov matrices, portfolio metrics |
+| `part2_Matrix_algebra.ipynb` | Python | Sharpe optimization, train/test validation |
+| `part1_Matrix_algebra_julia.ipynb` | Julia | Part 1 port (DataFrames.jl, LinearAlgebra) |
+| `part2_Matrix_algebra_julia.ipynb` | Julia | Part 2 port (Optim.jl) |
+| `PULL-DATA2026.ipynb` | Python | Original yfinance sector data puller |
+| `Portfolio_Optimization_COLAB.ipynb` (+2 variants) | Python | Original 8-phase cvxpy pipeline — now refactored into `portlab` |
 
-## Conversion Notes
+Expected CSV format for part1/part2: `Date, Ticker, Close, Sector`. Python↔Julia mapping: pandas↔DataFrames.jl, numpy↔LinearAlgebra/Statistics, scipy.optimize↔Optim.jl, plotly↔PlotlyJS.jl.
 
-The Julia implementation provides equivalent functionality to the Python version with the following key library mappings:
-
-| Python | Julia |
-|--------|-------|
-| pandas | DataFrames.jl |
-| numpy | LinearAlgebra, Statistics |
-| scipy.optimize | Optim.jl |
-| plotly | PlotlyJS.jl |
+</details>
 
 ## License
 
-This project is provided for educational and research purposes.
+MIT — free for educational, research, and personal use.
