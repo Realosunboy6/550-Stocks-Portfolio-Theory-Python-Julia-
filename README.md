@@ -36,7 +36,7 @@ Every tool family from [portfoliovisualizer.com](https://www.portfoliovisualizer
 | Reproducibility | Black box | **Every formula is open source in this repo** |
 | Saving / export | Paid feature | Notebooks + Drive cache; export anything with pandas |
 
-Free data sources: [yfinance](https://github.com/ranaroussi/yfinance) (prices), [Ken French library](https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html) (factors), [FRED](https://fred.stlouisfed.org) (CPI, T-bills), [Shiller/Yale](http://www.econ.yale.edu/~shiller/data.htm) (CAPE).
+Free data sources: [yfinance](https://github.com/ranaroussi/yfinance) (prices), [Ken French library](https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html) (factors), [FRED](https://fred.stlouisfed.org) (CPI, T-bills), [Shiller/Yale](http://www.econ.yale.edu/~shiller/data.htm) (CAPE), plus [GitHub dataset mirrors](https://github.com/datasets) (Shiller S&P 500 1871+, 10Y Treasury yields, gold) as a zero-dependency fallback via `portlab.data.get_mirror_returns()`.
 
 ## The `portlab` package
 
