@@ -99,3 +99,50 @@ def compare_funds(
         row["R²"] = tbl.attrs["r_squared"]
         rows[col] = row
     return pd.DataFrame(rows).T
+
+
+def attribution(
+    rets: pd.Series,
+    factors: pd.DataFrame,
+    model: str = "ff3",
+    rf_col: str = "RF",
+) -> pd.DataFrame:
+    """Factor performance attribution: cumulative return contribution of each
+    factor exposure plus alpha and residual (selection) effects."""
+    cols = MODEL_FACTORS[model]
+    df = pd.concat([rets.rename("_ret"), factors], axis=1, join="inner").dropna()
+    y = df["_ret"] - df[rf_col]
+    X = sm.add_constant(df[cols])
+    fit = sm.OLS(y, X).fit()
+    parts = {c: fit.params[c] * df[c] for c in cols}
+    parts["alpha"] = pd.Series(fit.params["const"], index=df.index)
+    parts["residual"] = fit.resid
+    parts["risk-free"] = df[rf_col]
+    contrib = pd.DataFrame(parts)
+    contrib.attrs["total"] = contrib.sum().rename("cumulative contribution")
+    contrib.attrs["loadings"] = fit.params.rename(index={"const": "alpha"})
+    return contrib
+
+
+def match_exposure(
+    target_rets: pd.Series,
+    candidate_rets: pd.DataFrame,
+    factors: pd.DataFrame | None = None,
+    model: str = "ff3",
+    bounds=(0.0, 1.0),
+) -> dict:
+    """Replicate a target fund with a portfolio of candidates (PV's
+    Match Factor Exposure): minimize tracking error vs the target, then
+    compare the factor loadings of target and replica."""
+    from .optimize import min_tracking_error
+    from .metrics import tracking_error as te_metric
+
+    w = min_tracking_error(candidate_rets, target_rets, bounds=bounds)
+    replica = (candidate_rets[w.index] * w.values).sum(axis=1)
+    out = {"weights": w,
+           "tracking_error": te_metric(replica, target_rets),
+           "replica_returns": replica}
+    if factors is not None:
+        both = pd.DataFrame({"Target": target_rets, "Replica": replica})
+        out["loadings"] = compare_funds(both, factors, model=model)
+    return out

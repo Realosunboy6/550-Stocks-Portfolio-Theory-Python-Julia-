@@ -53,3 +53,52 @@ def performance_table(rets: pd.DataFrame, rf: float = DEFAULT_RF,
     return pd.concat(
         [M.summary(rets[c].dropna(), rf=rf, periods=periods, bench=bench, name=c)
          for c in rets.columns], axis=1)
+
+
+def pca(rets: pd.DataFrame, n_components: int = 5) -> pd.DataFrame:
+    """Principal component analysis of asset returns (correlation-based).
+
+    Returns loadings (assets x components). attrs carry explained variance
+    ratios and the principal-portfolio weight matrix (eigenvectors scaled to
+    sum to 1 in absolute terms).
+    """
+    corr = rets.corr().values
+    vals, vecs = np.linalg.eigh(corr)
+    order = np.argsort(vals)[::-1]
+    vals, vecs = vals[order], vecs[:, order]
+    k = min(n_components, len(vals))
+    cols = [f"PC{i+1}" for i in range(k)]
+    loadings = pd.DataFrame(vecs[:, :k], index=rets.columns, columns=cols)
+    explained = pd.Series(vals[:k] / vals.sum(), index=cols)
+    pp = loadings / loadings.abs().sum(axis=0)
+    loadings.attrs["explained_variance"] = explained
+    loadings.attrs["principal_portfolios"] = pp
+    return loadings
+
+
+def screener(
+    rets: pd.DataFrame,
+    filters: dict | None = None,
+    sort_by: str = "Sharpe Ratio",
+    ascending: bool = False,
+    rf: float = DEFAULT_RF,
+    periods: int = TRADING_DAYS,
+    top: int | None = None,
+) -> pd.DataFrame:
+    """Return-based fund/stock screener over any return panel.
+
+    filters: {metric_name: (min, max)} using metric names from
+    portlab.metrics.summary, e.g. {"CAGR": (0.05, None),
+    "Max Drawdown": (-0.35, None)}. None disables a bound.
+    """
+    table = performance_table(rets, rf=rf, periods=periods).T
+    for metric, (lo, hi) in (filters or {}).items():
+        if metric not in table.columns:
+            raise ValueError(f"unknown metric {metric!r}; "
+                             f"available: {list(table.columns)}")
+        if lo is not None:
+            table = table[table[metric] >= lo]
+        if hi is not None:
+            table = table[table[metric] <= hi]
+    table = table.sort_values(sort_by, ascending=ascending)
+    return table.head(top) if top else table

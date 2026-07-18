@@ -125,3 +125,35 @@ def max_information_ratio(rets: pd.DataFrame, bench: pd.Series,
         return -active.mean() / sd
 
     return solve_weights(neg_ir, R.shape[1], bounds, groups, index=rets.columns)
+
+
+def geometric_frontier(rets: pd.DataFrame, n_points: int = 12,
+                       periods: int = 252, bounds=(0.0, 1.0)) -> pd.DataFrame:
+    """Geometric mean frontier (Bernstein & Wilkinson): for a sweep of
+    volatility caps, maximize expected log growth instead of arithmetic mean.
+    Rebalancing bonus/volatility drag is captured automatically."""
+    R = rets.values
+    vols = rets.std().values * np.sqrt(periods)
+
+    def neg_log_growth(w):
+        g = 1.0 + R @ w
+        if (g <= 1e-9).any():
+            return 1e6
+        return -np.mean(np.log(g))
+
+    rows = []
+    for cap in np.linspace(vols.min() * 0.7, vols.max(), n_points):
+        C = rets.cov().values * periods
+        extra = [{"type": "ineq", "fun": lambda w, c=cap: c ** 2 - w @ C @ w}]
+        try:
+            w = solve_weights(neg_log_growth, R.shape[1], bounds,
+                              extra_constraints=extra, index=rets.columns)
+        except Exception:
+            continue
+        pr = rets @ w
+        geo = (1 + pr).prod() ** (periods / len(pr)) - 1
+        rows.append({"vol_cap": cap,
+                     "realized_vol": float(pr.std() * np.sqrt(periods)),
+                     "geometric_mean": float(geo),
+                     **{f"w_{c}": w[c] for c in rets.columns}})
+    return pd.DataFrame(rows)

@@ -201,3 +201,38 @@ def cape_valuation(
     frac = 1.0 - 0.6 * ((cape - lo) / (hi - lo)).clip(0, 1)
     frac = frac.reindex(index, method="ffill").fillna(0.6)
     return pd.DataFrame({stock_asset: frac, bond_asset: 1.0 - frac}, index=index)
+
+
+def adaptive_allocation(
+    prices: pd.DataFrame,
+    returns: pd.DataFrame,
+    lookback: int = 126,
+    top_n: int = 4,
+    vol_window: int = 63,
+    out_asset: str | None = None,
+    rebalance_every: int = 21,
+) -> pd.DataFrame:
+    """PV's Adaptive Allocation: momentum selects the top-N assets, risk
+    (inverse volatility) sets their weights. Re-evaluated every
+    `rebalance_every` periods; weights held constant in between."""
+    mom = prices.pct_change(lookback)
+    vol = returns.rolling(vol_window).std()
+    rows, idx = [], []
+    for i in range(max(lookback, vol_window), len(prices), rebalance_every):
+        date = prices.index[i]
+        m = mom.iloc[i].dropna()
+        if m.empty:
+            continue
+        picks = m.nlargest(top_n).index
+        iv = 1.0 / vol.iloc[i][picks].replace(0, np.nan).dropna()
+        if iv.empty:
+            continue
+        w = iv / iv.sum()
+        row = pd.Series(0.0, index=prices.columns)
+        row[w.index] = w.values
+        rows.append(row)
+        idx.append(date)
+    w = pd.DataFrame(rows, index=idx).reindex(prices.index).ffill().fillna(0.0)
+    if out_asset is not None:
+        w[out_asset] = (1.0 - w.sum(axis=1)).clip(lower=0.0)
+    return w

@@ -181,3 +181,52 @@ def compare_portfolios(
                for nm, w in allocations.items()}
     table = pd.concat([r.summary().iloc[:, 0] for r in results.values()], axis=1)
     return table, results
+
+
+def backtest_dynamic(
+    returns: pd.DataFrame,
+    schedule: dict,
+    initial: float = 10_000.0,
+    rf: float = DEFAULT_RF,
+    periods: int = TRADING_DAYS,
+    name: str = "Dynamic Portfolio",
+) -> BacktestResult:
+    """PV-style dynamic-allocation backtest: weights change on given dates.
+
+    schedule: {date_like: {ticker: weight}} — on each date the portfolio is
+    rebalanced to the new targets; between dates weights drift with returns.
+    The union of all tickers across the schedule defines the asset set.
+    """
+    sched = {pd.Timestamp(d): pd.Series(w, dtype=float) / sum(w.values())
+             for d, w in schedule.items()}
+    dates = sorted(sched)
+    assets = sorted({a for w in sched.values() for a in w.index})
+    rets = returns[assets].dropna(how="any")
+    rets = rets.loc[rets.index >= dates[0]]
+    if rets.empty:
+        raise ValueError("no return history after the first schedule date")
+
+    holdings = None
+    bal, twr, wts, reb_dates = [], [], [], []
+    next_i = 0
+    for date, r in rets.iterrows():
+        while next_i < len(dates) and dates[next_i] <= date:
+            target = sched[dates[next_i]].reindex(assets).fillna(0.0)
+            total = holdings.sum() if holdings is not None else initial
+            holdings = total * target.values
+            reb_dates.append(date)
+            next_i += 1
+        start_total = holdings.sum()
+        wts.append(holdings / start_total if start_total > 0 else np.zeros(len(assets)))
+        holdings = holdings * (1 + r.values)
+        end_total = holdings.sum()
+        twr.append(end_total / start_total - 1 if start_total > 0 else 0.0)
+        bal.append(end_total)
+
+    idx = rets.index
+    return BacktestResult(
+        balance=pd.Series(bal, index=idx, name=name),
+        returns=pd.Series(twr, index=idx, name=name),
+        weights=pd.DataFrame(wts, index=idx, columns=assets),
+        cashflows=pd.Series(0.0, index=idx), periods=periods, rf=rf,
+        name=name, rebalance_dates=reb_dates)

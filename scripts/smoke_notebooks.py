@@ -52,12 +52,25 @@ def _synthetic_ff(model="ff3", freq="monthly", start="1990-01-01", **kw):
 
 
 def _synthetic_fred(series, start="1950-01-01", **kw):
-    idx = pd.date_range(start, pd.Timestamp.today(), freq="MS")
+    idx = pd.date_range(min(pd.Timestamp(start), pd.Timestamp("1960-01-01")), pd.Timestamp.today(), freq="MS")
     if series.startswith("CPI"):
         return pd.Series(100 * 1.0025 ** np.arange(len(idx)), index=idx, name=series)
     return pd.Series(3.0, index=idx, name=series)
 
 
+import portlab.data.asset_classes as _ac
+
+
+def _synthetic_6port(start):
+    idx = pd.date_range("1930-01-31", "2024-12-31", freq="ME")
+    rng = np.random.default_rng(6)
+    cols = ["US Large Cap Growth", "US Large Cap Value", "US Small Cap Growth",
+            "US Small Cap Value", "US Small Cap"]
+    return pd.DataFrame({c: rng.normal(0.008, 0.055, len(idx)) for c in cols},
+                        index=idx)
+
+
+_ac._french_size_value = _synthetic_6port
 _prices.download_prices = _synthetic_prices
 _factors.get_ff_factors = _synthetic_ff
 _macro.get_fred = _synthetic_fred

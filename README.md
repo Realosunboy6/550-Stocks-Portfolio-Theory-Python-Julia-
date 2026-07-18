@@ -16,6 +16,7 @@ Every tool family from [portfoliovisualizer.com](https://www.portfoliovisualizer
 | ⚡ **Tactical Models** | MA timing (incl. crossover + multi-period), dual momentum, relative strength, target vol, seasonal — with current signals | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Realosunboy6/free-portfolio-visualizer/blob/main/notebooks/06_tactical_models.ipynb) |
 | 🗂️ **Data Explorer** | Browse the 550-stock / 300-ETF universe, cache prices to Google Drive | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Realosunboy6/free-portfolio-visualizer/blob/main/notebooks/00_data_explorer.ipynb) |
 | 🏭 **Full 550-Stock Pipeline** | Walk-forward backtest of 6 optimizer strategies with transaction costs + stress tests | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Realosunboy6/free-portfolio-visualizer/blob/main/notebooks/07_full_550_pipeline.ipynb) |
+| 🏛️ **Asset-Class History** | Long-history backtests to 1926 (Ken French + FRED proxies), dynamic allocation schedules | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Realosunboy6/free-portfolio-visualizer/blob/main/notebooks/08_asset_class_history.ipynb) |
 
 **Quickstart:** tap a badge → edit the form fields (they render as native inputs in the Colab phone app) → *Runtime → Run all*. First run installs `portlab` (~1 min); price data caches to Google Drive so reruns are instant.
 
@@ -27,6 +28,7 @@ Every tool family from [portfoliovisualizer.com](https://www.portfoliovisualizer
 | Assets per analysis | 15 (free) / 150 (paid) | **Unlimited** |
 | Data frequency | Monthly | **Daily** (or any yfinance interval) |
 | Asset coverage | US-centric fund database | **Anything on Yahoo Finance** — global stocks, ETFs, crypto |
+| History depth | Asset classes from 1972 | **Equities from 1926, Treasuries from the 1950s** (Ken French + FRED proxies) |
 | Covariance estimation | Sample | **Ledoit-Wolf shrinkage, EWMA** |
 | Optimization validation | In-sample | **Walk-forward out-of-sample with transaction costs** |
 | Tactical model signals | Paid feature | **Free** (see notebook 06's last cell) |
@@ -57,16 +59,16 @@ plots.growth_chart(result.returns)    # interactive plotly
 
 | Module | Contents |
 |---|---|
-| `portlab.data` | Cached yfinance prices, 737-ticker curated universe, asset-class proxies, Ken French factors, FRED macro, Shiller CAPE |
+| `portlab.data` | Cached yfinance prices, 737-ticker curated universe, asset-class proxies, **long-history asset classes (1926+)**, Ken French factors, FRED macro, Shiller CAPE |
 | `portlab.metrics` | CAGR, IRR, Sharpe, Sortino, Calmar, Omega, drawdown tables, VaR/CVaR, capture ratios, rolling/annual tables |
-| `portlab.optimize` | Mean-variance + frontier, risk parity, min-CVaR (LP), max Sortino, Kelly, Omega, min max-drawdown (LP), tracking error, info ratio, Black-Litterman, Michaud resampling, group constraints, transaction costs |
-| `portlab.backtest` | Target-weight backtests with cashflows/rebalancing, walk-forward `RollingBacktest`, stress episodes & shock scenarios |
+| `portlab.optimize` | Mean-variance + frontier, risk parity, min-CVaR (LP), max Sortino, Kelly, Omega, min max-drawdown (LP), tracking error, info ratio, Black-Litterman, Michaud resampling, **geometric mean frontier**, group constraints, transaction costs |
+| `portlab.backtest` | Target-weight backtests with cashflows/rebalancing, **dynamic-allocation schedules**, walk-forward `RollingBacktest`, stress episodes & shock scenarios |
 | `portlab.montecarlo` | Bootstrap/block/normal/Student-t/statistical models, 5 withdrawal rules, success probabilities |
-| `portlab.factor` | CAPM → FF5+Mom regressions (Newey-West), rolling exposures, multi-fund comparison |
-| `portlab.analytics` | Correlations, autocorrelation, cointegration, performance tables |
-| `portlab.tactical` | MA/crossover/multi-period timing, dual momentum, relative strength, target vol, seasonal, CAPE switch — all evaluated lag-1, cost-aware |
+| `portlab.factor` | CAPM → FF5+Mom regressions (Newey-West), rolling exposures, multi-fund comparison, **performance attribution, match factor exposure** |
+| `portlab.analytics` | Correlations, autocorrelation, cointegration, performance tables, **PCA, return-based fund screener** |
+| `portlab.tactical` | MA/crossover/multi-period timing, dual momentum, relative strength, target vol, seasonal, CAPE switch — plus **adaptive allocation** — all evaluated lag-1, cost-aware |
 
-**Development:** `pip install -e ".[dev]" && pytest` (62 tests, no network needed) · `python scripts/smoke_notebooks.py` runs every notebook headlessly on synthetic data.
+**Development:** `pip install -e ".[dev]" && pytest` (75 tests, no network needed) · `python scripts/smoke_notebooks.py` runs every notebook headlessly on synthetic data.
 
 **Honest caveats:** yfinance adjusted prices are survivorship-biased for delisted stocks and revise over time; optimizers are only as good as their inputs (that's why Ledoit-Wolf, resampling, and walk-forward validation are defaults here); tactical backtests are experiments, not trading advice. Nothing in this repo is investment advice.
 
