@@ -1,9 +1,11 @@
 """Portfolio backtesting engine — the portlab equivalent of Portfolio
-Visualizer's "Backtest Portfolio" tool.
+Visualizer's "Backtest Portfolio" tool, extended beyond it.
 
 Supports fixed target weights, periodic contributions/withdrawals (optionally
 inflation-adjusted), periodic or tolerance-band rebalancing, benchmark
-comparison, and CPI-deflated (real) results.
+comparison, CPI-deflated (real) results, PV-style short-cash leverage with an
+optional maintenance-margin rule (which PV doesn't simulate), and after-tax
+results (dividend + capital-gains taxes — PV's backtests are pre-tax only).
 """
 
 from __future__ import annotations
@@ -22,7 +24,7 @@ REBALANCE_MONTHS = {"never": None, "monthly": 1, "quarterly": 3,
 
 @dataclass
 class BacktestResult:
-    balance: pd.Series                 # end-of-period portfolio value
+    balance: pd.Series                 # end-of-period equity value
     returns: pd.Series                 # per-period time-weighted returns
     weights: pd.DataFrame              # start-of-period effective weights
     cashflows: pd.Series               # external flows (+contribution/-withdrawal)
@@ -32,6 +34,8 @@ class BacktestResult:
     rf: float = DEFAULT_RF
     name: str = "Portfolio"
     rebalance_dates: list = field(default_factory=list)
+    taxes_paid: pd.Series | None = None      # per-period taxes deducted
+    margin_calls: list = field(default_factory=list)
 
     def summary(self) -> pd.DataFrame:
         s = M.summary(self.returns, rf=self.rf, periods=self.periods,
@@ -39,6 +43,8 @@ class BacktestResult:
         s["Ending Balance"] = float(self.balance.iloc[-1])
         if self.real_balance is not None:
             s["Ending Balance (real)"] = float(self.real_balance.iloc[-1])
+        if self.taxes_paid is not None and self.taxes_paid.sum() > 0:
+            s["Total Taxes Paid"] = float(self.taxes_paid.sum())
         initial = self.balance.iloc[0] / (1 + self.returns.iloc[0])
         flows = pd.Series(
             [-initial, *(-self.cashflows.iloc[1:])],
@@ -76,6 +82,13 @@ def backtest_portfolio(
     rf: float = DEFAULT_RF,
     periods: int = TRADING_DAYS,
     name: str = "Portfolio",
+    leverage: float = 1.0,
+    debt_rate: float | pd.Series = 0.0,
+    maintenance_margin: float | None = None,
+    tax_dividend: float = 0.0,
+    tax_capgains: float = 0.0,
+    div_yield: dict[str, float] | pd.Series | None = None,
+    carry_losses: bool = True,
 ) -> BacktestResult:
     """Simulate a target-weight portfolio through historical returns.
 
@@ -87,12 +100,33 @@ def backtest_portfolio(
     rebalance: 'never' | 'monthly' | 'quarterly' | 'semiannually' | 'annually'
         | 'bands' (use rebalance_band as absolute weight deviation trigger).
     cpi: monthly CPI index series; enables real (inflation-adjusted) balances.
+
+    Leverage (PV-style short cash):
+      leverage: gross exposure / equity, reset at every rebalance (1.0 = none).
+      debt_rate: annual borrow rate; a pd.Series (e.g. T-bill history) is
+        looked up per date. PV charges the historical 3-month T-bill rate.
+      maintenance_margin: e.g. 0.25 — when equity/gross falls below this,
+        positions are sold to restore the target leverage and the date is
+        recorded in `margin_calls` (this margin-call rule EXCEEDS PV, which
+        simply lets levered portfolios ride).
+
+    Taxes (beyond PV — its backtests are pre-tax):
+      tax_dividend: rate applied to dividend income each period. Because
+        prices are total-return (dividends reinvested), the dividend stream is
+        approximated from `div_yield` (annual yield per asset, e.g.
+        {"VTI": 0.015}); without div_yield no dividend tax is charged.
+      tax_capgains: rate applied to net realized gains on rebalancing sales
+        and withdrawals (average-cost basis).
+      carry_losses: net realized losses offset later gains.
     """
     w_target = pd.Series(weights, dtype=float)
     w_target = w_target / w_target.sum()
     rets = returns[list(w_target.index)].dropna(how="any")
     if rets.empty:
         raise ValueError("no overlapping return history for the requested assets")
+    if leverage < 1.0:
+        raise ValueError("leverage must be >= 1.0 (use cash in the allocation "
+                         "for sub-1x exposure)")
 
     cf_months = {"monthly": 1, "quarterly": 3, "annually": 12}[cashflow_freq]
     if rebalance != "bands":
@@ -110,24 +144,70 @@ def backtest_portfolio(
         cpi_m = cpi.reindex(rets.index, method="ffill")
         infl_factor = (cpi_m / cpi_m.iloc[0]).fillna(1.0)
 
-    holdings = initial * w_target.values          # dollar value per asset
-    bal, twr, wts, flows, reb_dates = [], [], [], [], []
+    # Per-period dividend yields per asset (for the dividend-tax haircut).
+    dy_p = None
+    if tax_dividend > 0 and div_yield is not None:
+        dy = pd.Series(div_yield, dtype=float).reindex(w_target.index).fillna(0.0)
+        dy_p = dy.values / periods
+
+    def rate_p(date) -> float:
+        if isinstance(debt_rate, pd.Series):
+            r_ann = debt_rate.asof(date)
+            r_ann = 0.0 if pd.isna(r_ann) else float(r_ann)
+        else:
+            r_ann = float(debt_rate)
+        return (1 + r_ann) ** (1 / periods) - 1
+
+    def realize(sells: np.ndarray, values: np.ndarray, basis: np.ndarray,
+                loss_carry: float) -> tuple[float, float, np.ndarray]:
+        """Tax on pro-rata sales with average-cost basis. Returns
+        (tax, new_loss_carry, new_basis)."""
+        safe = np.maximum(values, 1e-12)
+        gains = np.where(values > 0, sells * (1 - basis / safe), 0.0)
+        net = gains.sum() + loss_carry
+        tax = tax_capgains * max(net, 0.0)
+        new_carry = min(net, 0.0) if carry_losses else 0.0
+        new_basis = np.where(values > 0, basis * (1 - sells / safe), basis)
+        return tax, new_carry, new_basis
+
+    equity = initial
+    gross0 = equity * leverage
+    debt = gross0 - equity
+    holdings = gross0 * w_target.values           # dollar value per asset
+    basis = holdings.copy()
+    loss_carry = 0.0
+    bal, twr, wts, flows, taxes = [], [], [], [], []
+    reb_dates, mcall_dates = [], []
     prev_date = rets.index[0]
 
     for i, (date, r) in enumerate(rets.iterrows()):
+        period_tax = 0.0
         # --- external cashflow at period start (skip the very first period)
         flow = 0.0
         if i > 0 and cashflow != 0.0 and _is_period_boundary(prev_date, date, cf_months):
             flow = cashflow * (float(infl_factor.loc[date]) if infl_factor is not None else 1.0)
             total = holdings.sum()
-            if total + flow <= 0:      # ruined by withdrawal
+            if total - debt + flow <= 0:          # ruined by withdrawal
                 holdings = np.zeros_like(holdings)
-            else:
-                holdings = holdings * (1 + flow / total)
+                debt = 0.0
+            elif flow > 0 and total > 0:
+                added = holdings * (flow / total)
+                holdings = holdings + added
+                basis = basis + added
+            elif flow < 0 and total > 0:
+                sells = holdings * (-flow / total)
+                t, loss_carry, basis = realize(sells, holdings, basis, loss_carry)
+                holdings = holdings - sells
+                if t > 0 and holdings.sum() > 0:  # pay tax from the portfolio
+                    frac = t / holdings.sum()
+                    holdings = holdings * (1 - frac)
+                    basis = basis * (1 - frac)
+                    period_tax += t
 
         # --- rebalance check at period start
         total = holdings.sum()
-        if total > 0 and i > 0:
+        equity = total - debt
+        if equity > 0 and i > 0:
             cur_w = holdings / total
             do_reb = False
             if reb_months is not None and _is_period_boundary(prev_date, date, reb_months):
@@ -135,18 +215,63 @@ def backtest_portfolio(
             elif rebalance == "bands" and np.abs(cur_w - w_target.values).max() > rebalance_band:
                 do_reb = True
             if do_reb:
-                holdings = total * w_target.values
+                target_gross = equity * leverage
+                new_holdings = target_gross * w_target.values
+                sells = np.maximum(holdings - new_holdings, 0.0)
+                t, loss_carry, basis = realize(sells, holdings, basis, loss_carry)
+                buys = np.maximum(new_holdings - holdings, 0.0)
+                basis = basis + buys
+                holdings = new_holdings
+                debt = target_gross - equity
+                if t > 0 and holdings.sum() > 0:
+                    frac = t / holdings.sum()
+                    holdings = holdings * (1 - frac)
+                    basis = basis * (1 - frac)
+                    debt = debt          # tax paid by shrinking positions
+                    period_tax += t
                 reb_dates.append(date)
 
-        start_total = holdings.sum()
-        wts.append(holdings / start_total if start_total > 0 else w_target.values)
+        gross_start = holdings.sum()
+        equity_start = gross_start - debt
+        wts.append(holdings / gross_start if gross_start > 0 else w_target.values)
 
-        # --- apply market returns
-        holdings = holdings * (1 + r.values)
-        end_total = holdings.sum()
-        twr.append(end_total / start_total - 1 if start_total > 0 else 0.0)
-        bal.append(end_total)
+        # --- apply market returns (with optional dividend-tax haircut)
+        pre = holdings
+        growth = 1 + r.values
+        if dy_p is not None:
+            growth = growth - dy_p * tax_dividend
+            period_tax += float((pre * dy_p * tax_dividend).sum())
+        holdings = pre * growth
+
+        # --- debt accrual and equity
+        if debt > 0:
+            debt = debt * (1 + rate_p(date))
+        equity_end = holdings.sum() - debt
+
+        if equity_end <= 0 and (leverage > 1.0 or debt > 0):
+            holdings = np.zeros_like(holdings)   # levered ruin
+            debt = 0.0
+            equity_end = 0.0
+
+        # --- maintenance margin (beyond PV)
+        if (maintenance_margin is not None and equity_end > 0
+                and holdings.sum() > 0
+                and equity_end / holdings.sum() < maintenance_margin):
+            target_gross = equity_end * leverage
+            sell_total = holdings.sum() - target_gross
+            if sell_total > 0:
+                sells = holdings * (sell_total / holdings.sum())
+                t, loss_carry, basis = realize(sells, holdings, basis, loss_carry)
+                holdings = holdings - sells
+                debt = max(debt - (sell_total - t), 0.0)
+                period_tax += t
+                equity_end = holdings.sum() - debt
+                mcall_dates.append(date)
+
+        twr.append(equity_end / equity_start - 1 if equity_start > 0 else 0.0)
+        bal.append(equity_end)
         flows.append(flow)
+        taxes.append(period_tax)
         prev_date = date
 
     idx = rets.index
@@ -154,6 +279,7 @@ def backtest_portfolio(
     port_rets = pd.Series(twr, index=idx, name=name)
     weights_df = pd.DataFrame(wts, index=idx, columns=w_target.index)
     cashflows = pd.Series(flows, index=idx)
+    taxes_paid = pd.Series(taxes, index=idx)
 
     bench = None
     if benchmark is not None:
@@ -167,7 +293,8 @@ def backtest_portfolio(
     return BacktestResult(balance=balance, returns=port_rets, weights=weights_df,
                           cashflows=cashflows, benchmark_returns=bench,
                           real_balance=real_balance, periods=periods, rf=rf,
-                          name=name, rebalance_dates=reb_dates)
+                          name=name, rebalance_dates=reb_dates,
+                          taxes_paid=taxes_paid, margin_calls=mcall_dates)
 
 
 def compare_portfolios(
@@ -230,3 +357,30 @@ def backtest_dynamic(
         weights=pd.DataFrame(wts, index=idx, columns=assets),
         cashflows=pd.Series(0.0, index=idx), periods=periods, rf=rf,
         name=name, rebalance_dates=reb_dates)
+
+
+def glide_path(
+    start_weights: dict[str, float],
+    end_weights: dict[str, float],
+    start: str,
+    end: str,
+    steps: int = 12,
+) -> dict[pd.Timestamp, dict[str, float]]:
+    """Linear glide-path schedule for `backtest_dynamic` (PV Financial Goals
+    style: transition from a career-stage to a retirement-stage portfolio).
+
+    steps: number of allocation change points between start and end inclusive.
+    """
+    if steps < 2:
+        raise ValueError("steps must be >= 2")
+    assets = sorted(set(start_weights) | set(end_weights))
+    w0 = np.array([start_weights.get(a, 0.0) for a in assets], dtype=float)
+    w1 = np.array([end_weights.get(a, 0.0) for a in assets], dtype=float)
+    w0, w1 = w0 / w0.sum(), w1 / w1.sum()
+    dates = pd.date_range(pd.Timestamp(start), pd.Timestamp(end), periods=steps)
+    sched = {}
+    for k, d in enumerate(dates):
+        frac = k / (steps - 1)
+        w = (1 - frac) * w0 + frac * w1
+        sched[d] = {a: float(x) for a, x in zip(assets, w) if x > 1e-12}
+    return sched

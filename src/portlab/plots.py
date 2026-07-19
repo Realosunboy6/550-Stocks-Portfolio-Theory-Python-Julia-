@@ -122,3 +122,46 @@ def annual_returns_chart(rets: pd.DataFrame | pd.Series,
         fig.add_trace(go.Bar(x=yr.index.astype(str), y=yr.values, name=str(col)))
     fig.update_layout(title=title, yaxis_tickformat=".0%", barmode="group", **_LAYOUT)
     return fig
+
+
+def risk_budget_chart(weights: pd.Series, cov: pd.DataFrame,
+                      title: str = "Capital vs Risk Contribution") -> go.Figure:
+    """Percent contribution to portfolio risk per asset next to its capital
+    weight — PV shows this only in paid reports."""
+    from .optimize import risk_contributions
+    w = weights / weights.sum()
+    rc = risk_contributions(w, cov.loc[w.index, w.index])
+    order = rc.sort_values().index
+    fig = go.Figure()
+    fig.add_trace(go.Bar(y=[str(i) for i in order], x=w[order].values,
+                         name="Capital weight", orientation="h"))
+    fig.add_trace(go.Bar(y=[str(i) for i in order], x=rc[order].values,
+                         name="Risk contribution", orientation="h"))
+    fig.update_layout(title=title, barmode="group", xaxis_tickformat=".1%", **_LAYOUT)
+    return fig
+
+
+def return_contribution_chart(weights: pd.DataFrame, asset_returns: pd.DataFrame,
+                              title: str = "Cumulative Return Contribution") -> go.Figure:
+    """Stacked cumulative contribution of each asset to portfolio return,
+    from a backtest's start-of-period weights (BacktestResult.weights)."""
+    cols = [c for c in weights.columns if c in asset_returns.columns]
+    contrib = (weights[cols] * asset_returns[cols].reindex(weights.index)).cumsum()
+    fig = go.Figure()
+    for col in cols:
+        fig.add_trace(go.Scatter(x=contrib.index, y=contrib[col], name=str(col),
+                                 mode="lines", stackgroup="c"))
+    fig.update_layout(title=title, yaxis_tickformat=".0%", **_LAYOUT)
+    return fig
+
+
+def factor_attribution_chart(attribution_df: pd.DataFrame,
+                             title: str = "Cumulative Factor Attribution") -> go.Figure:
+    """Stacked cumulative contribution per factor from factor.attribution()."""
+    cum = attribution_df.cumsum()
+    fig = go.Figure()
+    for col in cum.columns:
+        fig.add_trace(go.Scatter(x=cum.index, y=cum[col], name=str(col),
+                                 mode="lines", stackgroup="f"))
+    fig.update_layout(title=title, yaxis_tickformat=".0%", **_LAYOUT)
+    return fig

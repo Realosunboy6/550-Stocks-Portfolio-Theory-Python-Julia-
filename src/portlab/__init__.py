@@ -10,7 +10,7 @@ __version__ = "0.1.0"
 from . import (analytics, backtest, covariance, factor, metrics, montecarlo,
                optimize, plots, returns, tactical)
 from .backtest import backtest_portfolio, compare_portfolios
-from .montecarlo import monte_carlo
+from .montecarlo import glide_weights, monte_carlo
 
 # `data` imports yfinance/pandas_datareader lazily-adjacent deps; keep it last
 # so a partial install can still use the math modules.
@@ -22,5 +22,5 @@ except ImportError:  # pragma: no cover
 __all__ = [
     "analytics", "backtest", "covariance", "data", "factor", "metrics",
     "montecarlo", "optimize", "plots", "returns", "tactical",
-    "backtest_portfolio", "compare_portfolios", "monte_carlo", "__version__",
+    "backtest_portfolio", "compare_portfolios", "monte_carlo", "glide_weights", "__version__",
 ]

@@ -33,6 +33,10 @@ Every tool family from [portfoliovisualizer.com](https://www.portfoliovisualizer
 | Optimization validation | In-sample | **Walk-forward out-of-sample with transaction costs** |
 | Tactical model signals | Paid feature | **Free** (see notebook 06's last cell) |
 | Fat-tail simulation | Not offered | **Student-t + block bootstrap Monte Carlo** |
+| Withdrawal rules | 5 | **7** — adds VPW (Bogleheads) and Guyton-Klinger guardrails |
+| After-tax backtests | Pre-tax only | **Dividend + capital-gains tax modeling** |
+| Margin-call simulation | Not simulated | **Maintenance-margin rule with forced deleveraging** |
+| Preset portfolios | Manual entry | **17 famous lazy portfolios built in** |
 | Reproducibility | Black box | **Every formula is open source in this repo** |
 | Saving / export | Paid feature | Notebooks + Drive cache; export anything with pandas |
 
@@ -59,16 +63,16 @@ plots.growth_chart(result.returns)    # interactive plotly
 
 | Module | Contents |
 |---|---|
-| `portlab.data` | Cached yfinance prices, 737-ticker curated universe, asset-class proxies, **long-history asset classes (1926+)**, Ken French factors, FRED macro, Shiller CAPE |
+| `portlab.data` | Cached yfinance prices, 737-ticker curated universe, **17 lazy portfolios**, asset-class proxies, **long-history asset classes (1926+)**, Ken French factors, FRED macro, Shiller CAPE, GitHub-mirror fallbacks |
 | `portlab.metrics` | CAGR, IRR, Sharpe, Sortino, Calmar, Omega, drawdown tables, VaR/CVaR, capture ratios, rolling/annual tables |
 | `portlab.optimize` | Mean-variance + frontier, risk parity, min-CVaR (LP), max Sortino, Kelly, Omega, min max-drawdown (LP), tracking error, info ratio, Black-Litterman, Michaud resampling, **geometric mean frontier**, group constraints, transaction costs |
-| `portlab.backtest` | Target-weight backtests with cashflows/rebalancing, **dynamic-allocation schedules**, walk-forward `RollingBacktest`, stress episodes & shock scenarios |
-| `portlab.montecarlo` | Bootstrap/block/normal/Student-t/statistical models, 5 withdrawal rules, success probabilities |
+| `portlab.backtest` | Target-weight backtests with cashflows/rebalancing, **PV-style leverage + maintenance margin, after-tax results, dynamic-allocation schedules, glide paths**, walk-forward `RollingBacktest`, stress episodes & shock scenarios |
+| `portlab.montecarlo` | Bootstrap/block/normal/Student-t/statistical models, **7 withdrawal rules (incl. VPW + Guyton-Klinger), time-varying glide-path simulation**, success probabilities |
 | `portlab.factor` | CAPM → FF5+Mom regressions (Newey-West), rolling exposures, multi-fund comparison, **performance attribution, match factor exposure** |
 | `portlab.analytics` | Correlations, autocorrelation, cointegration, performance tables, **PCA, return-based fund screener** |
 | `portlab.tactical` | MA/crossover/multi-period timing, dual momentum, relative strength, target vol, seasonal, CAPE switch — plus **adaptive allocation** — all evaluated lag-1, cost-aware |
 
-**Development:** `pip install -e ".[dev]" && pytest` (75 tests, no network needed) · `python scripts/smoke_notebooks.py` runs every notebook headlessly on synthetic data.
+**Development:** `pip install -e ".[dev]" && pytest` (106 tests, no network needed) · `python scripts/smoke_notebooks.py` runs every notebook headlessly on synthetic data.
 
 **Honest caveats:** yfinance adjusted prices are survivorship-biased for delisted stocks and revise over time; optimizers are only as good as their inputs (that's why Ledoit-Wolf, resampling, and walk-forward validation are defaults here); tactical backtests are experiments, not trading advice. Nothing in this repo is investment advice.
 
