@@ -8,3 +8,5 @@ dist/
 portlab_cache/
 .cache/
 site/
+tear_sheet.html
+*.html

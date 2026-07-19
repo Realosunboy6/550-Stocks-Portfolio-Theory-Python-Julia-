@@ -4,5 +4,7 @@ title: "portlab: a free, open-source Portfolio Visualizer alternative"
 authors:
   - name: "Realosunboy6 and portlab contributors"
 repository-code: "https://github.com/Realosunboy6/free-portfolio-visualizer"
+version: 0.2.0
+date-released: "2026-07-19"
 license: MIT
 keywords: [portfolio, backtesting, optimization, monte-carlo, factor-analysis, finance]
