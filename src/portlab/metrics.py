@@ -64,9 +64,12 @@ def calmar(rets: pd.Series, periods: int = TRADING_DAYS) -> float:
 # ---------------------------------------------------------------- drawdowns
 
 def drawdown_series(rets: pd.Series, geometric: bool = True) -> pd.Series:
-    """Drawdowns from peak; geometric=False uses additive (cumsum) wealth."""
+    """Drawdowns from peak; geometric=False uses additive (cumsum) wealth.
+
+    Initial wealth (1.0) counts as the first peak, so losses taken before any
+    new high are drawdowns — matching Portfolio Visualizer and empyrical."""
     wealth = (1 + rets).cumprod() if geometric else 1 + rets.cumsum()
-    peak = np.maximum(wealth.cummax(), 1.0) if not geometric else wealth.cummax()
+    peak = np.maximum(wealth.cummax(), 1.0)
     return wealth / peak - 1
 
 
@@ -254,6 +257,8 @@ def var_parametric(rets: pd.Series, alpha: float = DEFAULT_ALPHA,
 
     method='normal' uses the Gaussian quantile; 'cornish_fisher' adjusts the
     quantile for the sample's skewness and excess kurtosis (modified VaR).
+    The CF expansion is reliable for moderate skew/kurtosis only (|skew| ~< 2);
+    for extreme distributions prefer var_historical.
     """
     from scipy import stats as _st
     mu, sd = float(rets.mean()), float(rets.std(ddof=1))
@@ -284,12 +289,13 @@ def geometric_mean(rets: pd.Series) -> float:
 
 
 def cdar(rets: pd.Series, alpha: float = DEFAULT_ALPHA) -> float:
-    """Conditional Drawdown at Risk: mean of the worst (1-alpha) drawdowns
-    (positive number)."""
-    dd = -drawdown_series(rets)
-    cutoff = np.quantile(dd, alpha)
-    tail = dd[dd >= cutoff]
-    return float(tail.mean()) if len(tail) else float(dd.max())
+    """Conditional Drawdown at Risk: mean of the worst (1-alpha) fraction of
+    drawdown observations (positive number). Uses a k-worst selection rather
+    than a quantile cutoff so the point mass of zero-drawdown periods (every
+    new high) cannot dilute the tail."""
+    dd = np.sort(-drawdown_series(rets).values)[::-1]      # worst first
+    k = max(int(np.ceil(round((1 - alpha) * len(dd), 9))), 1)
+    return float(dd[:k].mean())
 
 
 # ------------------------------------------------- benchmark & trade-style stats
@@ -359,8 +365,8 @@ def kelly_fraction(rets: pd.Series) -> float:
 def best_worst(rets: pd.Series) -> pd.DataFrame:
     """Best and worst compounded period returns by day/month/quarter/year."""
     rows = {}
-    for label, freq in [("Day", None), ("Month", "ME"), ("Quarter", "QE"),
-                        ("Year", "YE")]:
+    for label, freq in [("Period (native)", None), ("Month", "ME"),
+                        ("Quarter", "QE"), ("Year", "YE")]:
         r = rets if freq is None else (1 + rets).resample(freq).prod() - 1
         rows[label] = {"Best": float(r.max()), "Worst": float(r.min())}
     return pd.DataFrame(rows).T

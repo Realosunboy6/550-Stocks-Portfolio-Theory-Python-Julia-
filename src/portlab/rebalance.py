@@ -50,4 +50,5 @@ def rebalance_trades(
         sells = out[out["action"] == "SELL"].sort_values("est_realized_gain")
         rest = out[out["action"] != "SELL"]
         out = pd.concat([sells, rest])
+    out.attrs["unallocated_cash"] = round(float(cash_to_add - out["trade"].sum()), 2)
     return out

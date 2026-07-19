@@ -90,7 +90,7 @@ def test_trade_stats_on_known_series():
 
 def test_best_worst_shape(returns):
     tbl = M.best_worst(returns["A0"])
-    assert list(tbl.index) == ["Day", "Month", "Quarter", "Year"]
+    assert list(tbl.index) == ["Period (native)", "Month", "Quarter", "Year"]
     assert (tbl["Best"] >= tbl["Worst"]).all()
 
 

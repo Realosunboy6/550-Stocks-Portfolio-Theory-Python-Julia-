@@ -108,7 +108,9 @@ def min_cdar(
     A_ub = coo_matrix((vals, (rows, cols)), shape=(r, nv)).tocsr()
     A_eq = np.zeros((1, nv)); A_eq[0, :n] = 1.0
     lo, hi = bounds
-    var_bounds = ([(lo, hi)] * n + [(None, None)] * T + [(None, None)]
+    # m_t >= 0 encodes C_0 = 0: the starting wealth is itself a peak, so a
+    # loss taken before any new high still counts as drawdown.
+    var_bounds = ([(lo, hi)] * n + [(0, None)] * T + [(None, None)]
                   + [(0, None)] * T)
     c = np.zeros(nv); c[n + T] = 1.0; c[n + T + 1:] = inv
     res = linprog(c, A_ub=A_ub, b_ub=np.array(b), A_eq=A_eq, b_eq=[1.0],

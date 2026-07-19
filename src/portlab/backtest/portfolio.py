@@ -73,7 +73,7 @@ class BacktestResult:
 def _is_period_boundary(prev: pd.Timestamp, cur: pd.Timestamp, months: int) -> bool:
     """True when `cur` starts a new k-month block (calendar-aligned)."""
     if prev.year != cur.year or prev.month != cur.month:
-        return ((cur.year * 12 + cur.month) % months) == 0 or months == 1
+        return ((cur.month - 1) % months) == 0 or months == 1
     return False
 
 

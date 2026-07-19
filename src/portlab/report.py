@@ -66,7 +66,9 @@ def tear_sheet(
     panel = rets.to_frame(str(name))
     if benchmark is not None:
         panel["Benchmark"] = benchmark
-    window = min(max(periods, 60), len(rets) - 1)
+    # ~1y window for daily data, ~3y for monthly/quarterly — never degenerate
+    window = periods if periods >= 60 else 3 * periods
+    window = max(min(window, len(rets) - 1), 10)
 
     figs = [
         plots.growth_chart(panel, title="Cumulative Growth", log_scale=True),
