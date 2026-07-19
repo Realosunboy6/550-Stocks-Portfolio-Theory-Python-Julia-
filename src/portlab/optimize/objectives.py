@@ -142,9 +142,10 @@ def geometric_frontier(rets: pd.DataFrame, n_points: int = 12,
         return -np.mean(np.log(g))
 
     rows = []
+    C = rets.cov().values * periods
     for cap in np.linspace(vols.min() * 0.7, vols.max(), n_points):
-        C = rets.cov().values * periods
-        extra = [{"type": "ineq", "fun": lambda w, c=cap: c ** 2 - w @ C @ w}]
+        extra = [{"type": "ineq",
+                  "fun": lambda w, c=cap, Q=C: c ** 2 - w @ Q @ w}]
         try:
             w = solve_weights(neg_log_growth, R.shape[1], bounds,
                               extra_constraints=extra, index=rets.columns)

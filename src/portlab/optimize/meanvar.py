@@ -9,19 +9,23 @@ from ..config import DEFAULT_RF
 from .core import portfolio_stats, solve_weights
 
 
-def gmv(mu: pd.Series, cov: pd.DataFrame, bounds=(0.0, 1.0), groups=None) -> pd.Series:
-    """Global minimum-variance portfolio."""
+def gmv(mu: pd.Series, cov: pd.DataFrame, bounds=(0.0, 1.0), groups=None,
+        gamma: float = 0.0) -> pd.Series:
+    """Global minimum-variance portfolio. gamma adds L2 regularization
+    (gamma * ||w||^2) to spread weights across more assets."""
     C = cov.values
-    return solve_weights(lambda w: w @ C @ w, len(mu), bounds, groups, index=mu.index)
+    return solve_weights(lambda w: w @ C @ w + gamma * (w @ w), len(mu),
+                         bounds, groups, index=mu.index)
 
 
 def max_sharpe(mu: pd.Series, cov: pd.DataFrame, rf: float = DEFAULT_RF,
-               bounds=(0.0, 1.0), groups=None) -> pd.Series:
+               bounds=(0.0, 1.0), groups=None, gamma: float = 0.0) -> pd.Series:
     m, C = mu.values, cov.values
 
     def neg_sharpe(w):
         vol = np.sqrt(w @ C @ w)
-        return -(w @ m - rf) / vol if vol > 0 else 0.0
+        base = -(w @ m - rf) / vol if vol > 0 else 0.0
+        return base + gamma * (w @ w)
 
     return solve_weights(neg_sharpe, len(mu), bounds, groups, index=mu.index)
 

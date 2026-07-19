@@ -18,7 +18,6 @@ These are *proxy* series for research — not investable fund histories.
 
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
 
 from . import cache

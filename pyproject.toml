@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "portlab"
-version = "0.1.0"
+version = "0.2.0"
 description = "Free, open-source Portfolio Visualizer alternative that runs entirely in Google Colab"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -27,7 +27,8 @@ Homepage = "https://github.com/Realosunboy6/free-portfolio-visualizer"
 
 [project.optional-dependencies]
 opt = ["cvxpy>=1.4"]
-dev = ["pytest>=7", "papermill>=2.4", "jupyter>=1.0"]
+dev = ["pytest>=7", "pytest-cov>=4", "ruff>=0.4", "papermill>=2.4", "jupyter>=1.0"]
+app = ["streamlit>=1.30"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

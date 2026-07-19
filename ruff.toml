@@ -1,0 +1,11 @@
+line-length = 100
+target-version = "py310"
+
+[lint]
+# Correctness-focused: pyflakes + real errors; style stays the author's.
+select = ["E4", "E7", "E9", "F", "B", "NPY"]
+ignore = ["E731", "E702", "B905"]
+
+[lint.per-file-ignores]
+"tests/*" = ["F841"]
+"notebooks/*" = ["ALL"]

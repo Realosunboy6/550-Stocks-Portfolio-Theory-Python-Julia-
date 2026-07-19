@@ -1,0 +1,8 @@
+cff-version: 1.2.0
+message: "If you use portlab in research or coursework, please cite it."
+title: "portlab: a free, open-source Portfolio Visualizer alternative"
+authors:
+  - name: "Realosunboy6 and portlab contributors"
+repository-code: "https://github.com/Realosunboy6/free-portfolio-visualizer"
+license: MIT
+keywords: [portfolio, backtesting, optimization, monte-carlo, factor-analysis, finance]

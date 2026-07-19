@@ -20,6 +20,16 @@ def cov_ledoit_wolf(rets: pd.DataFrame, annualize: int | None = None) -> pd.Data
     return cov * annualize if annualize else cov
 
 
+def cov_semi(rets: pd.DataFrame, threshold: float = 0.0,
+             annualize: int | None = None) -> pd.DataFrame:
+    """Semicovariance: co-movement of below-threshold returns only
+    (downside-risk-aware input for optimization)."""
+    d = np.minimum(rets - threshold, 0.0)
+    cov = pd.DataFrame(d.values.T @ d.values / max(len(rets) - 1, 1),
+                       index=rets.columns, columns=rets.columns)
+    return cov * annualize if annualize else cov
+
+
 def cov_ewma(rets: pd.DataFrame, halflife: int = 60,
              annualize: int | None = None) -> pd.DataFrame:
     """Exponentially weighted covariance using the most recent estimate."""
@@ -31,7 +41,8 @@ def cov_ewma(rets: pd.DataFrame, halflife: int = 60,
 
 def get_cov(rets: pd.DataFrame, method: str = "ledoit_wolf",
             annualize: int | None = TRADING_DAYS, **kwargs) -> pd.DataFrame:
-    methods = {"sample": cov_sample, "ledoit_wolf": cov_ledoit_wolf, "ewma": cov_ewma}
+    methods = {"sample": cov_sample, "ledoit_wolf": cov_ledoit_wolf,
+               "ewma": cov_ewma, "semi": cov_semi}
     if method not in methods:
         raise ValueError(f"method must be one of {sorted(methods)}")
     return psd_fix(methods[method](rets, annualize=annualize, **kwargs))

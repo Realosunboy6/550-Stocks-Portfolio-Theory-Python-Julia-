@@ -25,9 +25,9 @@ import plotly.graph_objects as go
 
 go.Figure.show = lambda self, *a, **k: None   # headless: never render
 
-import portlab.data.factors as _factors
-import portlab.data.macro as _macro
-import portlab.data.prices as _prices
+import portlab.data.factors as _factors  # noqa: E402
+import portlab.data.macro as _macro  # noqa: E402
+import portlab.data.prices as _prices  # noqa: E402
 
 
 def _synthetic_prices(tickers, start, end=None, interval="1d", **kw):
@@ -58,7 +58,7 @@ def _synthetic_fred(series, start="1950-01-01", **kw):
     return pd.Series(3.0, index=idx, name=series)
 
 
-import portlab.data.asset_classes as _ac
+import portlab.data.asset_classes as _ac  # noqa: E402
 
 
 def _synthetic_6port(start):
@@ -87,8 +87,8 @@ def run_notebook(path: Path) -> None:
             continue
         src = src.replace("SMOKE = False", "SMOKE = True")
         # strip Colab magics/shell lines if any slipped in
-        src = "\n".join(l for l in src.splitlines()
-                        if not l.lstrip().startswith(("!", "%")))
+        src = "\n".join(ln for ln in src.splitlines()
+                        if not ln.lstrip().startswith(("!", "%")))
         try:
             exec(compile(src, f"{path.name}:cell{i}", "exec"), ns)
         except Exception:
@@ -102,7 +102,7 @@ def main() -> int:
     for p in targets:
         print(f"-- {p.name}")
         run_notebook(p)
-        print(f"   OK")
+        print("   OK")
     print(f"{len(targets)} notebooks passed smoke test")
     return 0
 

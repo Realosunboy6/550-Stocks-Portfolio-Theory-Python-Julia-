@@ -63,9 +63,11 @@ def calmar(rets: pd.Series, periods: int = TRADING_DAYS) -> float:
 
 # ---------------------------------------------------------------- drawdowns
 
-def drawdown_series(rets: pd.Series) -> pd.Series:
-    wealth = (1 + rets).cumprod()
-    return wealth / wealth.cummax() - 1
+def drawdown_series(rets: pd.Series, geometric: bool = True) -> pd.Series:
+    """Drawdowns from peak; geometric=False uses additive (cumsum) wealth."""
+    wealth = (1 + rets).cumprod() if geometric else 1 + rets.cumsum()
+    peak = np.maximum(wealth.cummax(), 1.0) if not geometric else wealth.cummax()
+    return wealth / peak - 1
 
 
 def max_drawdown(rets: pd.Series) -> float:
@@ -242,3 +244,188 @@ def summary(rets: pd.Series, rf: float = DEFAULT_RF, periods: int = TRADING_DAYS
             "Downside Capture": down,
         })
     return pd.Series(out, name=name)
+
+
+# ------------------------------------------------- parametric tail risk
+
+def var_parametric(rets: pd.Series, alpha: float = DEFAULT_ALPHA,
+                   method: str = "normal") -> float:
+    """Parametric Value-at-Risk (positive = loss).
+
+    method='normal' uses the Gaussian quantile; 'cornish_fisher' adjusts the
+    quantile for the sample's skewness and excess kurtosis (modified VaR).
+    """
+    from scipy import stats as _st
+    mu, sd = float(rets.mean()), float(rets.std(ddof=1))
+    z = float(_st.norm.ppf(1 - alpha))          # lower-tail quantile (negative)
+    if method == "cornish_fisher":
+        s_, k_ = float(rets.skew()), float(rets.kurtosis())
+        z = (z + (z ** 2 - 1) * s_ / 6 + (z ** 3 - 3 * z) * k_ / 24
+             - (2 * z ** 3 - 5 * z) * s_ ** 2 / 36)
+    elif method != "normal":
+        raise ValueError("method must be 'normal' or 'cornish_fisher'")
+    return float(-(mu + sd * z))
+
+
+def cvar_parametric(rets: pd.Series, alpha: float = DEFAULT_ALPHA) -> float:
+    """Closed-form Gaussian expected shortfall (positive = loss)."""
+    from scipy import stats as _st
+    mu, sd = float(rets.mean()), float(rets.std(ddof=1))
+    z = float(_st.norm.ppf(alpha))
+    return float(sd * _st.norm.pdf(z) / (1 - alpha) - mu)
+
+
+def geometric_mean(rets: pd.Series) -> float:
+    """Per-period geometric mean return: (prod(1+r))^(1/n) - 1."""
+    growth = float((1 + rets).prod())
+    if growth <= 0:
+        return -1.0
+    return growth ** (1 / len(rets)) - 1
+
+
+def cdar(rets: pd.Series, alpha: float = DEFAULT_ALPHA) -> float:
+    """Conditional Drawdown at Risk: mean of the worst (1-alpha) drawdowns
+    (positive number)."""
+    dd = -drawdown_series(rets)
+    cutoff = np.quantile(dd, alpha)
+    tail = dd[dd >= cutoff]
+    return float(tail.mean()) if len(tail) else float(dd.max())
+
+
+# ------------------------------------------------- benchmark & trade-style stats
+
+def treynor(rets: pd.Series, bench: pd.Series, rf: float = DEFAULT_RF,
+            periods: int = TRADING_DAYS) -> float:
+    b, _ = beta_alpha(rets, bench, rf, periods)
+    if b == 0:
+        return np.nan
+    return float((cagr(rets, periods) - rf) / b)
+
+
+def m_squared(rets: pd.Series, bench: pd.Series, rf: float = DEFAULT_RF,
+              periods: int = TRADING_DAYS) -> float:
+    """Modigliani M²: portfolio return scaled to benchmark volatility."""
+    return float(rf + sharpe(rets, rf, periods) * ann_vol(bench.dropna(), periods))
+
+
+def r_squared(rets: pd.Series, bench: pd.Series) -> float:
+    df = pd.concat([rets, bench], axis=1, join="inner").dropna()
+    c = df.iloc[:, 0].corr(df.iloc[:, 1])
+    return float(c ** 2)
+
+
+def tail_ratio(rets: pd.Series, q: float = 0.95) -> float:
+    """|right tail| / |left tail| at quantile q — >1 means fatter gains."""
+    left = abs(np.quantile(rets, 1 - q))
+    if left == 0:
+        return np.inf
+    return float(abs(np.quantile(rets, q)) / left)
+
+
+def win_rate(rets: pd.Series) -> float:
+    nz = rets[rets != 0]
+    return float((nz > 0).mean()) if len(nz) else np.nan
+
+
+def payoff_ratio(rets: pd.Series) -> float:
+    wins, losses = rets[rets > 0], rets[rets < 0]
+    if len(losses) == 0 or losses.mean() == 0:
+        return np.inf
+    return float(wins.mean() / abs(losses.mean()))
+
+
+def profit_factor(rets: pd.Series) -> float:
+    losses = rets[rets < 0].sum()
+    if losses == 0:
+        return np.inf
+    return float(rets[rets > 0].sum() / abs(losses))
+
+
+def gain_to_pain(rets: pd.Series) -> float:
+    losses = abs(rets[rets < 0].sum())
+    if losses == 0:
+        return np.inf
+    return float(rets.sum() / losses)
+
+
+def kelly_fraction(rets: pd.Series) -> float:
+    """Optimal fraction of capital per Kelly (mean/variance approximation)."""
+    var = rets.var(ddof=1)
+    if var == 0:
+        return np.nan
+    return float(rets.mean() / var)
+
+
+def best_worst(rets: pd.Series) -> pd.DataFrame:
+    """Best and worst compounded period returns by day/month/quarter/year."""
+    rows = {}
+    for label, freq in [("Day", None), ("Month", "ME"), ("Quarter", "QE"),
+                        ("Year", "YE")]:
+        r = rets if freq is None else (1 + rets).resample(freq).prod() - 1
+        rows[label] = {"Best": float(r.max()), "Worst": float(r.min())}
+    return pd.DataFrame(rows).T
+
+
+# ------------------------------------------------- drawdown-family ratios
+
+def pain_index(rets: pd.Series) -> float:
+    """Mean absolute drawdown over the whole history."""
+    return float(-drawdown_series(rets).mean())
+
+
+def pain_ratio(rets: pd.Series, rf: float = DEFAULT_RF,
+               periods: int = TRADING_DAYS) -> float:
+    pi = pain_index(rets)
+    if pi == 0:
+        return np.inf
+    return float((cagr(rets, periods) - rf) / pi)
+
+
+def sterling_ratio(rets: pd.Series, periods: int = TRADING_DAYS,
+                   n_worst: int = 10) -> float:
+    """CAGR / |mean of the n worst drawdown depths|."""
+    tbl = drawdown_table(rets, top=n_worst)
+    if tbl.empty:
+        return np.inf
+    denom = abs(tbl["Depth"].mean())
+    return float(cagr(rets, periods) / denom) if denom else np.inf
+
+
+def burke_ratio(rets: pd.Series, rf: float = DEFAULT_RF,
+                periods: int = TRADING_DAYS, n_worst: int = 10) -> float:
+    """Excess CAGR / sqrt(sum of squared drawdown depths)."""
+    tbl = drawdown_table(rets, top=n_worst)
+    if tbl.empty:
+        return np.inf
+    denom = float(np.sqrt((tbl["Depth"] ** 2).sum()))
+    return float((cagr(rets, periods) - rf) / denom) if denom else np.inf
+
+
+def recovery_factor(rets: pd.Series) -> float:
+    mdd = abs(max_drawdown(rets))
+    if mdd == 0:
+        return np.inf
+    total = float((1 + rets).prod() - 1)
+    return float(total / mdd)
+
+
+# ------------------------------------------------- rolling helpers
+
+def rolling_sharpe(rets: pd.Series, window: int, rf: float = DEFAULT_RF,
+                   periods: int = TRADING_DAYS) -> pd.Series:
+    excess = rets - rf / periods
+    return (excess.rolling(window).mean()
+            / excess.rolling(window).std(ddof=1) * np.sqrt(periods))
+
+
+def rolling_vol(rets: pd.Series, window: int,
+                periods: int = TRADING_DAYS) -> pd.Series:
+    return rets.rolling(window).std(ddof=1) * np.sqrt(periods)
+
+
+def rolling_beta(rets: pd.Series, bench: pd.Series, window: int) -> pd.Series:
+    df = pd.concat([rets, bench], axis=1, join="inner").dropna()
+    r, b = df.iloc[:, 0], df.iloc[:, 1]
+    cov = r.rolling(window).cov(b)
+    var = b.rolling(window).var()
+    return cov / var

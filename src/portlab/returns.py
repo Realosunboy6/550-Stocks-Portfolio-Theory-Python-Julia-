@@ -8,12 +8,19 @@ import pandas as pd
 from .config import TRADING_DAYS
 
 
-def simple_returns(prices: pd.DataFrame | pd.Series) -> pd.DataFrame | pd.Series:
-    return prices.pct_change().iloc[1:]
+def simple_returns(prices: pd.DataFrame | pd.Series,
+                   periods_lag: int = 1) -> pd.DataFrame | pd.Series:
+    """Simple returns; periods_lag > 1 gives N-period (overlapping) returns."""
+    if periods_lag < 1:
+        raise ValueError("periods_lag must be >= 1")
+    return prices.pct_change(periods_lag).iloc[periods_lag:]
 
 
-def log_returns(prices: pd.DataFrame | pd.Series) -> pd.DataFrame | pd.Series:
-    return np.log(prices / prices.shift(1)).iloc[1:]
+def log_returns(prices: pd.DataFrame | pd.Series,
+                periods_lag: int = 1) -> pd.DataFrame | pd.Series:
+    if periods_lag < 1:
+        raise ValueError("periods_lag must be >= 1")
+    return np.log(prices / prices.shift(periods_lag)).iloc[periods_lag:]
 
 
 def clean_returns(
@@ -52,6 +59,12 @@ def to_monthly(daily_rets: pd.DataFrame | pd.Series) -> pd.DataFrame | pd.Series
     return (1 + daily_rets).resample("ME").prod() - 1
 
 
-def growth_of(rets: pd.Series | pd.DataFrame, initial: float = 1.0):
-    """Cumulative growth of an initial investment, same index as rets."""
-    return initial * (1 + rets).cumprod()
+def growth_of(rets: pd.Series | pd.DataFrame, initial: float = 1.0,
+              geometric: bool = True):
+    """Cumulative growth of an initial investment, same index as rets.
+
+    geometric=False uses additive (cumsum) wealth, PortfolioAnalytics.jl style.
+    """
+    if geometric:
+        return initial * (1 + rets).cumprod()
+    return initial * (1 + rets.cumsum())

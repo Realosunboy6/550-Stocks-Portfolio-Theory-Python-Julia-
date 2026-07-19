@@ -165,3 +165,41 @@ def factor_attribution_chart(attribution_df: pd.DataFrame,
                                  mode="lines", stackgroup="f"))
     fig.update_layout(title=title, yaxis_tickformat=".0%", **_LAYOUT)
     return fig
+
+
+def frontier_transition_chart(frontier_df: pd.DataFrame,
+                              title: str = "Allocation Along the Frontier") -> go.Figure:
+    """Stacked composition of weights across the efficient frontier (the
+    'decision space' view from PortfolioAnalytics.jl, on real frontier points)."""
+    wcols = [c for c in frontier_df.columns if c.startswith("w_")]
+    df = frontier_df.sort_values("volatility")
+    fig = go.Figure()
+    for c in wcols:
+        fig.add_trace(go.Scatter(x=df["volatility"], y=df[c], name=c[2:],
+                                 mode="lines", stackgroup="w"))
+    fig.update_layout(title=title, xaxis_title="Volatility (ann.)",
+                      xaxis_tickformat=".0%", yaxis_tickformat=".0%", **_LAYOUT)
+    return fig
+
+
+def monthly_heatmap(rets: pd.Series, title: str = "Monthly Returns") -> go.Figure:
+    """Year x Month heatmap of compounded returns (the quantstats classic)."""
+    tbl = M.monthly_return_table(rets)
+    fig = px.imshow(tbl, color_continuous_scale="RdYlGn",
+                    zmin=-abs(tbl).max().max(), zmax=abs(tbl).max().max(),
+                    aspect="auto", title=title,
+                    labels=dict(color="Return"))
+    fig.update_traces(text=tbl.map(lambda v: "" if pd.isna(v) else f"{v:.1%}").values,
+                      texttemplate="%{text}")
+    fig.update_layout(**{k: v for k, v in _LAYOUT.items() if k != "height"},
+                      height=max(400, 24 * len(tbl)))
+    return fig
+
+
+def rolling_beta_chart(rets: pd.Series, bench: pd.Series, window: int = 126,
+                       title: str = "Rolling Beta") -> go.Figure:
+    beta = M.rolling_beta(rets, bench, window).dropna()
+    fig = go.Figure(go.Scatter(x=beta.index, y=beta, mode="lines", name="beta"))
+    fig.add_hline(y=1.0, line_dash="dot")
+    fig.update_layout(title=title, **_LAYOUT)
+    return fig

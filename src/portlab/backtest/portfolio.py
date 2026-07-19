@@ -60,6 +60,15 @@ class BacktestResult:
     def drawdowns(self, top: int = 10) -> pd.DataFrame:
         return M.drawdown_table(self.returns, top)
 
+    def tear_sheet(self, output: str | None = "tear_sheet.html",
+                   title: str | None = None) -> str:
+        """One-line shareable HTML report for this backtest."""
+        from ..report import tear_sheet
+        return tear_sheet(self.returns, benchmark=self.benchmark_returns,
+                          rf=self.rf, periods=self.periods,
+                          title=title or f"{self.name} — Tear Sheet",
+                          output=output)
+
 
 def _is_period_boundary(prev: pd.Timestamp, cur: pd.Timestamp, months: int) -> bool:
     """True when `cur` starts a new k-month block (calendar-aligned)."""

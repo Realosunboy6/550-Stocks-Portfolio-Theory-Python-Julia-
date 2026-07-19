@@ -102,3 +102,35 @@ def screener(
             table = table[table[metric] <= hi]
     table = table.sort_values(sort_by, ascending=ascending)
     return table.head(top) if top else table
+
+
+def income_history(tickers: list[str], start: str = "2015-01-01",
+                   holdings: dict[str, float] | None = None) -> pd.DataFrame:
+    """Annual dividend income per ticker from yfinance dividend records.
+
+    holdings: optional {ticker: dollar value today} — adds an estimated
+    annual income column using the trailing-12-month yield.
+    """
+    import yfinance as yf
+    from .data.prices import get_prices
+
+    prices = get_prices(tickers, start)
+    rows = {}
+    for t in tickers:
+        try:
+            div = yf.Ticker(t).dividends
+            div.index = div.index.tz_localize(None)
+            div = div.loc[div.index >= pd.Timestamp(start)]
+        except Exception:
+            continue
+        if div.empty:
+            continue
+        annual = div.groupby(div.index.year).sum()
+        last_price = float(prices[t].dropna().iloc[-1])
+        ttm = float(div.iloc[-4:].sum()) if len(div) >= 4 else float(annual.iloc[-1])
+        row = {f"{y}": float(v) for y, v in annual.items()}
+        row["TTM yield"] = ttm / last_price
+        if holdings and t in holdings:
+            row["Est. annual income"] = holdings[t] * ttm / last_price
+        rows[t] = row
+    return pd.DataFrame(rows).T

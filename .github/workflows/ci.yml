@@ -15,7 +15,9 @@ jobs:
           python-version: "3.11"
       - name: Install package
         run: pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check .
       - name: Unit tests (no network)
-        run: pytest -q
+        run: pytest -q --cov=portlab --cov-report=term
       - name: Notebook smoke tests (synthetic data)
         run: python scripts/smoke_notebooks.py

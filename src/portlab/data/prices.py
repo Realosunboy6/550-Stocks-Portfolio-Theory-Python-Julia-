@@ -61,3 +61,19 @@ def get_returns(tickers: list[str] | str, start: str, end: str | None = None,
     prices = get_prices(tickers, start, end, interval, **kwargs)
     rets = log_returns(prices) if log else simple_returns(prices)
     return clean_returns(rets)
+
+
+def convert_currency(prices: pd.DataFrame | pd.Series, quote_currency: str,
+                     base_currency: str = "USD") -> pd.DataFrame | pd.Series:
+    """Convert a price panel quoted in `quote_currency` into `base_currency`
+    using the yfinance FX cross (e.g. EURUSD=X). Same index as `prices`.
+
+    Note: yfinance quotes most FX pairs as XXXYYY=X = units of YYY per XXX.
+    """
+    if quote_currency.upper() == base_currency.upper():
+        return prices
+    pair = f"{quote_currency.upper()}{base_currency.upper()}=X"
+    start = str(prices.index.min().date())
+    fx = get_prices([pair], start)[pair]
+    fx = fx.reindex(prices.index, method="ffill")
+    return prices.mul(fx, axis=0)

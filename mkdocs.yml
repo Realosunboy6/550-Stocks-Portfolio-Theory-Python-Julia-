@@ -1,0 +1,27 @@
+site_name: portlab
+site_description: Free, open-source Portfolio Visualizer alternative for Google Colab
+site_url: https://realosunboy6.github.io/free-portfolio-visualizer/
+repo_url: https://github.com/Realosunboy6/free-portfolio-visualizer
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: teal
+      toggle: {icon: material/brightness-7, name: Dark mode}
+    - scheme: slate
+      primary: teal
+      toggle: {icon: material/brightness-4, name: Light mode}
+  features: [navigation.sections, content.code.copy]
+markdown_extensions:
+  - pymdownx.arithmatex: {generic: true}
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - admonition
+extra_javascript:
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+nav:
+  - Home: index.md
+  - Formula Reference: formulas.md
+  - Examples: examples.md
+  - Glossary: glossary.md
+  - API Overview: api.md

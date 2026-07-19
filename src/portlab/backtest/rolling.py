@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-import numpy as np
 import pandas as pd
 
 from ..config import DEFAULT_RF, TRADING_DAYS

@@ -47,7 +47,7 @@ def build_constraints(
     if groups:
         for idx, lo, hi in groups.values():
             idx = np.asarray(idx)
-            cons.append({"type": "ineq", "fun": lambda w, i=idx, l=lo: w[i].sum() - l})
+            cons.append({"type": "ineq", "fun": lambda w, i=idx, m=lo: w[i].sum() - m})
             cons.append({"type": "ineq", "fun": lambda w, i=idx, h=hi: h - w[i].sum()})
     if extra:
         cons.extend(extra)
