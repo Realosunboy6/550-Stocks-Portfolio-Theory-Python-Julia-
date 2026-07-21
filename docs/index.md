@@ -3,7 +3,10 @@
 Portfolio analysis that runs entirely in Google Colab, on free data. Phone-friendly.
 
 Backtesting, optimization, retirement planning, factor analysis and tactical models,
-all as open Python you can inspect, extend, and run anywhere.
+all as open Python you can inspect, extend, and run anywhere. The point is simple:
+the analysis behind an investment decision should be something you can read, verify,
+and afford — whether you're a student learning the formulas, an individual planning
+retirement, or a team that needs reproducible results.
 
 ## Quickstart
 

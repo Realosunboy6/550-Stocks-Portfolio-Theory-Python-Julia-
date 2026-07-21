@@ -4,6 +4,12 @@ Portfolio analysis that runs entirely in Google Colab, on free data. Backtesting
 
 This project started as university coursework, Modern Portfolio Theory built from scratch on about 550 stocks. At some point I wanted the whole workflow, not just the math: pull prices, test an allocation, stress it, plan withdrawals, see where the risk actually sits. So the coursework grew into a proper Python package with notebooks on top.
 
+## Why this matters
+
+Deciding how to invest your savings is one of the few financial decisions almost everyone has to make, and the analysis behind it shouldn't require money or blind trust. A student learning portfolio theory should be able to open the Sharpe ratio and see the actual formula, then run it on real data the same afternoon. Someone managing their own retirement should be able to test whether their plan survives a 1970s-style decade without paying for the privilege. And when a chart is about to influence what you do with your money, you should be able to read the code that drew it.
+
+That's the design here. Every metric is documented with its formula and covered by a test. All the data comes from public sources. The whole thing runs on a free Colab session, which means the only hardware you need is whatever you're reading this on.
+
 ## The tools
 
 Each notebook is a form. Tap a badge, change the tickers and dates, then Runtime → Run all. The first run installs the package (about a minute); prices cache to Google Drive so reruns are quick.
