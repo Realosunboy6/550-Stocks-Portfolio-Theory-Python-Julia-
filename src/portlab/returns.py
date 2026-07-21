@@ -63,7 +63,7 @@ def growth_of(rets: pd.Series | pd.DataFrame, initial: float = 1.0,
               geometric: bool = True):
     """Cumulative growth of an initial investment, same index as rets.
 
-    geometric=False uses additive (cumsum) wealth, PortfolioAnalytics.jl style.
+    geometric=False uses additive (cumsum) wealth.
     """
     if geometric:
         return initial * (1 + rets).cumprod()

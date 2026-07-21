@@ -1,4 +1,4 @@
-"""One-line HTML tear sheet — the quantstats-style shareable report.
+"""One-line HTML tear sheet: a shareable performance report.
 
     from portlab.report import tear_sheet
     tear_sheet(returns, benchmark, output="my_portfolio.html")

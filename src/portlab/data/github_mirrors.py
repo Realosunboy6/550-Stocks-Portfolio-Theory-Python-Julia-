@@ -94,7 +94,7 @@ def gold_returns(refresh: bool = False) -> pd.Series:
 def get_mirror_returns(start: str = "1972-01-01",
                        refresh: bool = False) -> pd.DataFrame:
     """Monthly returns for stocks / 10Y Treasuries / gold from the mirrors —
-    a complete PV-style asset-class panel with zero API dependencies."""
+    a complete asset-class panel with zero API dependencies."""
     out = pd.DataFrame({
         s.name: s for s in (sp500_total_returns(refresh),
                             treasury10y_returns(refresh),

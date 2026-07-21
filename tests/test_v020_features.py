@@ -1,5 +1,5 @@
-"""Tests for the Super-Prompt v2 additions: Julia-package parity, metrics
-expansion, HRP/CDaR/semicov/L2, tear sheet, rebalance utilities."""
+"""Tests for the v0.2.0 additions: parametric risk metrics, HRP, CDaR,
+semicovariance, tear sheet, and the rebalance utilities."""
 
 import numpy as np
 import pandas as pd
@@ -14,7 +14,7 @@ from portlab.report import tear_sheet
 from portlab.returns import growth_of, log_returns, simple_returns
 
 
-# --------------------------------------------- A: PortfolioAnalytics.jl parity
+# --------------------------------------------- A: parametric metrics & variants
 
 def test_parametric_var_matches_closed_form():
     rng = np.random.default_rng(1)

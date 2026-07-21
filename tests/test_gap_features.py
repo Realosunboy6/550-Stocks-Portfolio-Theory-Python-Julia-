@@ -1,4 +1,4 @@
-"""Tests for the Portfolio Visualizer gap-closure features."""
+"""Tests for the long-history, screener, attribution and tactical features."""
 
 import numpy as np
 import pandas as pd

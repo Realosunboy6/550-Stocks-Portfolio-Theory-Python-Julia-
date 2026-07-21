@@ -1,7 +1,7 @@
 """Price downloads: batched yfinance with retry/backoff and parquet caching.
 
 `auto_adjust=True` means Close is dividend/split-adjusted — total-return
-prices, matching Portfolio Visualizer's reinvested-dividends convention.
+prices with dividends reinvested.
 """
 
 from __future__ import annotations

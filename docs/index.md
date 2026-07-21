@@ -1,9 +1,9 @@
 # portlab
 
-**Free, open-source Portfolio Visualizer alternative — runs entirely in Google Colab, phone-friendly.**
+Portfolio analysis that runs entirely in Google Colab, on free data. Phone-friendly.
 
-Every tool family from portfoliovisualizer.com as open Python you can inspect, extend, and run
-anywhere, plus professional features the website locks behind $30–55/month or doesn't have at all.
+Backtesting, optimization, retirement planning, factor analysis and tactical models,
+all as open Python you can inspect, extend, and run anywhere.
 
 ## Quickstart
 

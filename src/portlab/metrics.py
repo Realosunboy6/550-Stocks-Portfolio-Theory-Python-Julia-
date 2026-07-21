@@ -67,7 +67,7 @@ def drawdown_series(rets: pd.Series, geometric: bool = True) -> pd.Series:
     """Drawdowns from peak; geometric=False uses additive (cumsum) wealth.
 
     Initial wealth (1.0) counts as the first peak, so losses taken before any
-    new high are drawdowns — matching Portfolio Visualizer and empyrical."""
+    new high are drawdowns (the standard convention)."""
     wealth = (1 + rets).cumprod() if geometric else 1 + rets.cumsum()
     peak = np.maximum(wealth.cummax(), 1.0)
     return wealth / peak - 1
@@ -208,7 +208,7 @@ def annual_returns(rets: pd.Series) -> pd.Series:
 
 
 def monthly_return_table(rets: pd.Series) -> pd.DataFrame:
-    """Year x Month table of compounded returns (PV-style)."""
+    """Year x Month table of compounded returns."""
     m = (1 + rets).groupby([rets.index.year, rets.index.month]).prod() - 1
     tbl = m.unstack()
     tbl.columns = [pd.Timestamp(2000, c, 1).strftime("%b") for c in tbl.columns]
@@ -217,7 +217,7 @@ def monthly_return_table(rets: pd.Series) -> pd.DataFrame:
 
 def summary(rets: pd.Series, rf: float = DEFAULT_RF, periods: int = TRADING_DAYS,
             bench: pd.Series | None = None, name: str = "Portfolio") -> pd.Series:
-    """PV-style metric block for one return series."""
+    """Full metric block for one return series."""
     yr = annual_returns(rets)
     out = {
         "CAGR": cagr(rets, periods),

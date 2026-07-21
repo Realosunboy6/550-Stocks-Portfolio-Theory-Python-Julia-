@@ -14,7 +14,7 @@ from portlab.covariance import corr_from_cov, get_cov
 from portlab.data import LAZY_PORTFOLIOS, get_returns
 from portlab.report import tear_sheet
 
-st.set_page_config(page_title="portlab — free Portfolio Visualizer", page_icon="📈",
+st.set_page_config(page_title="portlab — portfolio analysis", page_icon="📈",
                    layout="wide")
 
 
@@ -28,7 +28,7 @@ def parse_tickers(raw: str) -> list[str]:
 
 
 st.sidebar.title("📈 portlab")
-st.sidebar.caption("Free, open-source Portfolio Visualizer alternative — "
+st.sidebar.caption("Free, open-source portfolio analysis — "
                    "[GitHub](https://github.com/Realosunboy6/free-portfolio-visualizer)")
 page = st.sidebar.radio("Tool", ["Backtest", "Optimize", "Retirement", "Analytics"])
 start = st.sidebar.text_input("Start date", "2015-01-01")

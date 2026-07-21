@@ -1,11 +1,10 @@
-"""Portfolio backtesting engine — the portlab equivalent of Portfolio
-Visualizer's "Backtest Portfolio" tool, extended beyond it.
+"""Portfolio backtesting engine.
 
 Supports fixed target weights, periodic contributions/withdrawals (optionally
 inflation-adjusted), periodic or tolerance-band rebalancing, benchmark
-comparison, CPI-deflated (real) results, PV-style short-cash leverage with an
-optional maintenance-margin rule (which PV doesn't simulate), and after-tax
-results (dividend + capital-gains taxes — PV's backtests are pre-tax only).
+comparison, CPI-deflated (real) results, short-cash leverage with an optional
+maintenance-margin rule, and after-tax results (dividend and capital-gains
+taxes).
 """
 
 from __future__ import annotations
@@ -110,16 +109,15 @@ def backtest_portfolio(
         | 'bands' (use rebalance_band as absolute weight deviation trigger).
     cpi: monthly CPI index series; enables real (inflation-adjusted) balances.
 
-    Leverage (PV-style short cash):
+    Leverage (short cash):
       leverage: gross exposure / equity, reset at every rebalance (1.0 = none).
       debt_rate: annual borrow rate; a pd.Series (e.g. T-bill history) is
-        looked up per date. PV charges the historical 3-month T-bill rate.
+        looked up per date (e.g. the historical 3-month T-bill series).
       maintenance_margin: e.g. 0.25 — when equity/gross falls below this,
         positions are sold to restore the target leverage and the date is
-        recorded in `margin_calls` (this margin-call rule EXCEEDS PV, which
-        simply lets levered portfolios ride).
+        recorded in `margin_calls`.
 
-    Taxes (beyond PV — its backtests are pre-tax):
+    Taxes:
       tax_dividend: rate applied to dividend income each period. Because
         prices are total-return (dividends reinvested), the dividend stream is
         approximated from `div_yield` (annual yield per asset, e.g.
@@ -262,7 +260,7 @@ def backtest_portfolio(
             debt = 0.0
             equity_end = 0.0
 
-        # --- maintenance margin (beyond PV)
+        # --- maintenance margin
         if (maintenance_margin is not None and equity_end > 0
                 and holdings.sum() > 0
                 and equity_end / holdings.sum() < maintenance_margin):
@@ -312,7 +310,7 @@ def compare_portfolios(
     benchmark: pd.Series | None = None,
     **kwargs,
 ) -> tuple[pd.DataFrame, dict[str, BacktestResult]]:
-    """Backtest several allocations (PV lets you compare 3 — we allow any number)."""
+    """Backtest any number of allocations side by side."""
     results = {nm: backtest_portfolio(returns, w, benchmark=benchmark, name=nm, **kwargs)
                for nm, w in allocations.items()}
     table = pd.concat([r.summary().iloc[:, 0] for r in results.values()], axis=1)
@@ -327,7 +325,7 @@ def backtest_dynamic(
     periods: int = TRADING_DAYS,
     name: str = "Dynamic Portfolio",
 ) -> BacktestResult:
-    """PV-style dynamic-allocation backtest: weights change on given dates.
+    """Dynamic-allocation backtest: weights change on given dates.
 
     schedule: {date_like: {ticker: weight}} — on each date the portfolio is
     rebalanced to the new targets; between dates weights drift with returns.
@@ -375,8 +373,8 @@ def glide_path(
     end: str,
     steps: int = 12,
 ) -> dict[pd.Timestamp, dict[str, float]]:
-    """Linear glide-path schedule for `backtest_dynamic` (PV Financial Goals
-    style: transition from a career-stage to a retirement-stage portfolio).
+    """Linear glide-path schedule for `backtest_dynamic`: transition from a
+    career-stage to a retirement-stage portfolio.
 
     steps: number of allocation change points between start and end inclusive.
     """

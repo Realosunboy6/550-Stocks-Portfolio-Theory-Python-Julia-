@@ -1,5 +1,5 @@
-"""Tests for the beyond-PV features: leverage, taxes, VPW/guardrails,
-glide paths, lazy portfolios, attribution charts."""
+"""Tests for leverage, taxes, VPW/guardrails, glide paths, lazy
+portfolios, and the attribution charts."""
 
 import numpy as np
 import pandas as pd

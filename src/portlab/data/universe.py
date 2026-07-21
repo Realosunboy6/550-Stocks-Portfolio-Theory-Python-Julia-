@@ -1,7 +1,7 @@
 """Ticker universe: 11 GICS sectors (~400 curated stocks), sector ETFs,
 and 22 extended ETF categories — carried over from PULL-DATA2026 /
-Portfolio_Optimization_COLAB — plus Portfolio Visualizer-style asset-class
-proxies with ETF inception dates.
+Portfolio_Optimization_COLAB — plus asset-class proxies with ETF inception
+dates.
 """
 
 # ── Universe definition ───────────────────────────────────────
@@ -206,7 +206,7 @@ for cat, tickers in ETF_CATEGORIES.items():
 ALL_TICKERS = list(dict.fromkeys(ALL_TICKERS))
 
 
-# ── Asset-class proxies (PV-style asset classes -> investable ETFs) ─────
+# ── Asset-class proxies (asset classes -> investable ETFs) ─────────────
 # value = (ticker, approximate inception year of the ETF history)
 ASSET_CLASS_PROXIES = {
     "US Stock Market":            ("VTI", 2001),

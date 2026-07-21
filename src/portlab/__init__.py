@@ -1,4 +1,4 @@
-"""portlab — free, open-source Portfolio Visualizer alternative for Colab.
+"""portlab — portfolio analysis toolkit for Google Colab.
 
 High-level API:
     from portlab import data, metrics, optimize, backtest, montecarlo

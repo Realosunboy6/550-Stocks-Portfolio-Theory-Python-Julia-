@@ -1,4 +1,4 @@
-"""The optimization objectives Portfolio Visualizer offers beyond mean-variance:
+"""Optimization objectives beyond plain mean-variance:
 max Sortino, Kelly criterion, Omega ratio, minimum maximum-drawdown,
 minimum tracking error, and maximum information ratio."""
 

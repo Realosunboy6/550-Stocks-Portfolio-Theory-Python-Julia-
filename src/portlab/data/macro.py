@@ -25,7 +25,7 @@ def get_fred(series: str, start: str = "1950-01-01",
 
 def get_cpi(start: str = "1950-01-01") -> pd.Series:
     """CPI-U index (CPIAUCSL) — used for real returns and inflation-adjusted
-    cashflows, same series Portfolio Visualizer uses. Falls back to the
+    cashflows. Falls back to the
     Shiller GitHub mirror when FRED is unreachable."""
     try:
         return get_fred("CPIAUCSL", start)

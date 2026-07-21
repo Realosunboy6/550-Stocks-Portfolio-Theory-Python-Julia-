@@ -1,8 +1,7 @@
 """Long-history asset-class returns from free academic/government data.
 
-Portfolio Visualizer's asset-class backtests reach back to 1972 using stitched
-proxies. This module goes further where the data allows, and is honest about
-how each series is built:
+These series are stitched from free academic and government data, reaching
+back to 1926 where the data allows. How each one is built:
 
   - US equity classes: Ken French library (1926+). Market = Mkt-RF + RF;
     size/value cells from the 6 Portfolios Formed on Size and Book-to-Market.

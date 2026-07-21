@@ -1,4 +1,4 @@
-"""Tactical / timing models, mirroring Portfolio Visualizer's tactical suite:
+"""Tactical / timing models:
 moving-average timing (price-vs-MA and MA crossover, multi-period weighted
 signals), relative strength, dual momentum, target volatility, seasonal, and
 CAPE-based valuation switching.
@@ -66,12 +66,12 @@ def ma_timing(
 ) -> pd.DataFrame:
     """Moving-average timing.
 
-    windows: single window (price vs MA) or {window: weight} for PV's
+    windows: single window (price vs MA) or {window: weight} for
         multiple weighted timing periods (fraction invested = weighted share
         of bullish signals).
     crossover_fast: if set, signal is fast-MA > slow-MA instead of price > MA.
-    signal_prices: optional separate signal asset prices (PV's
-        'separate signal asset' option); defaults to traded prices.
+    signal_prices: optional separate signal asset prices; defaults to
+        traded prices.
     """
     sp = signal_prices if signal_prices is not None else prices
     if isinstance(windows, int):
@@ -103,8 +103,8 @@ def relative_strength(
 ) -> pd.DataFrame:
     """Hold the top-N assets by (weighted multi-period) trailing return.
 
-    ma_risk_control: PV's override — a selected asset below its own N-period
-    MA is replaced by the out-of-market asset.
+    ma_risk_control: a selected asset below its own N-period MA is replaced
+    by the out-of-market asset.
     """
     if isinstance(lookbacks, int):
         lookbacks = {lookbacks: 1.0}
@@ -212,7 +212,7 @@ def adaptive_allocation(
     out_asset: str | None = None,
     rebalance_every: int = 21,
 ) -> pd.DataFrame:
-    """PV's Adaptive Allocation: momentum selects the top-N assets, risk
+    """Adaptive allocation: momentum selects the top-N assets, risk
     (inverse volatility) sets their weights. Re-evaluated every
     `rebalance_every` periods; weights held constant in between."""
     mom = prices.pct_change(lookback)

@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use portlab in research or coursework, please cite it."
-title: "portlab: a free, open-source Portfolio Visualizer alternative"
+title: "portlab: a free, open-source portfolio analysis toolkit"
 authors:
   - name: "Realosunboy6 and portlab contributors"
 repository-code: "https://github.com/Realosunboy6/free-portfolio-visualizer"

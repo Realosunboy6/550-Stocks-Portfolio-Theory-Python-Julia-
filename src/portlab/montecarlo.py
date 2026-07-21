@@ -1,6 +1,6 @@
 """Monte Carlo simulation of portfolio growth and retirement withdrawals.
 
-Return models (matching Portfolio Visualizer's four, plus block bootstrap):
+Return models:
   - 'bootstrap'        IID resampling of historical portfolio returns
   - 'block_bootstrap'  circular block resampling (preserves autocorrelation)
   - 'normal'           parameterized normal from given mean/vol
@@ -9,9 +9,9 @@ Return models (matching Portfolio Visualizer's four, plus block bootstrap):
 
 The parameterized models accept per-year sequences for mean/vol, and the
 statistical model accepts a year-by-year `weights_schedule` — together with
-`glide_weights()` this simulates PV Financial Goals-style glide paths.
+`glide_weights()` this simulates life-cycle glide paths.
 
-Withdrawal rules (PV's five, plus two it doesn't have):
+Withdrawal rules:
   - none, fixed real amount, fixed percentage, smoothed percentage
     (rolling average balance), RMD-style 1/remaining-life-expectancy,
     custom per-period schedule,

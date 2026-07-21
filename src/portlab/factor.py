@@ -131,9 +131,9 @@ def match_exposure(
     model: str = "ff3",
     bounds=(0.0, 1.0),
 ) -> dict:
-    """Replicate a target fund with a portfolio of candidates (PV's
-    Match Factor Exposure): minimize tracking error vs the target, then
-    compare the factor loadings of target and replica."""
+    """Replicate a target fund with a portfolio of candidates: minimize
+    tracking error vs the target, then compare the factor loadings of
+    target and replica."""
     from .optimize import min_tracking_error
     from .metrics import tracking_error as te_metric
 

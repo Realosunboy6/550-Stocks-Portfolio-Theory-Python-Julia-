@@ -1,5 +1,5 @@
 site_name: portlab
-site_description: Free, open-source Portfolio Visualizer alternative for Google Colab
+site_description: Free, open-source portfolio analysis toolkit for Google Colab
 site_url: https://realosunboy6.github.io/free-portfolio-visualizer/
 repo_url: https://github.com/Realosunboy6/free-portfolio-visualizer
 theme:

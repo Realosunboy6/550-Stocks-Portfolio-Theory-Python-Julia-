@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "portlab"
 version = "0.2.0"
-description = "Free, open-source Portfolio Visualizer alternative that runs entirely in Google Colab"
+description = "Free, open-source portfolio analysis toolkit that runs entirely in Google Colab"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }

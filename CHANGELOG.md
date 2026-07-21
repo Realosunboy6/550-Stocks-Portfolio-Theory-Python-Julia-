@@ -5,7 +5,7 @@ All notable changes to portlab. Format: [Keep a Changelog](https://keepachangelo
 ## [0.2.0] - 2026-07-19
 
 ### Added
-- Parametric + Cornish-Fisher VaR, parametric CVaR, CDaR metric (strict superset of PortfolioAnalytics.jl)
+- Parametric + Cornish-Fisher VaR, parametric CVaR, CDaR metric
 - ~18 new metrics: Treynor, M², tail ratio, win rate/payoff/profit factor, gain-to-pain,
   Sterling/Burke/pain ratios, recovery factor, R², Kelly fraction, best/worst table, rolling Sharpe/vol/beta
 - Hierarchical Risk Parity (`optimize.hrp`), semicovariance estimator, min-CDaR LP, L2 regularization (`gamma`)
@@ -17,6 +17,6 @@ All notable changes to portlab. Format: [Keep a Changelog](https://keepachangelo
 - Streamlit web app (`app.py`)
 
 ### Earlier (0.1.0, unreleased on PyPI)
-- Full Portfolio Visualizer tool coverage: backtesting (leverage, taxes, cashflows, band rebalancing),
+- Full tool coverage: backtesting (leverage, taxes, cashflows, band rebalancing),
   14 optimizers, Monte Carlo with 7 withdrawal rules and glide paths, factor analysis, tactical models,
   1926+ asset-class history, 17 lazy portfolios, free data layer with caching and GitHub-mirror fallbacks.

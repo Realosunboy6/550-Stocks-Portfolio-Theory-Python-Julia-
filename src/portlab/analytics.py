@@ -49,7 +49,7 @@ def cointegration_test(price_a: pd.Series, price_b: pd.Series) -> pd.Series:
 def performance_table(rets: pd.DataFrame, rf: float = DEFAULT_RF,
                       periods: int = TRADING_DAYS,
                       bench: pd.Series | None = None) -> pd.DataFrame:
-    """PV-style side-by-side comparison of several assets/funds."""
+    """Side-by-side comparison of several assets/funds."""
     return pd.concat(
         [M.summary(rets[c].dropna(), rf=rf, periods=periods, bench=bench, name=c)
          for c in rets.columns], axis=1)

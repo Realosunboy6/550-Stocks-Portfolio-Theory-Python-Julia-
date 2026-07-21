@@ -127,7 +127,7 @@ def annual_returns_chart(rets: pd.DataFrame | pd.Series,
 def risk_budget_chart(weights: pd.Series, cov: pd.DataFrame,
                       title: str = "Capital vs Risk Contribution") -> go.Figure:
     """Percent contribution to portfolio risk per asset next to its capital
-    weight — PV shows this only in paid reports."""
+    weight."""
     from .optimize import risk_contributions
     w = weights / weights.sum()
     rc = risk_contributions(w, cov.loc[w.index, w.index])
@@ -169,8 +169,7 @@ def factor_attribution_chart(attribution_df: pd.DataFrame,
 
 def frontier_transition_chart(frontier_df: pd.DataFrame,
                               title: str = "Allocation Along the Frontier") -> go.Figure:
-    """Stacked composition of weights across the efficient frontier (the
-    'decision space' view from PortfolioAnalytics.jl, on real frontier points)."""
+    """Stacked composition of weights across the efficient frontier."""
     wcols = [c for c in frontier_df.columns if c.startswith("w_")]
     df = frontier_df.sort_values("volatility")
     fig = go.Figure()
@@ -183,7 +182,7 @@ def frontier_transition_chart(frontier_df: pd.DataFrame,
 
 
 def monthly_heatmap(rets: pd.Series, title: str = "Monthly Returns") -> go.Figure:
-    """Year x Month heatmap of compounded returns (the quantstats classic)."""
+    """Year x Month heatmap of compounded returns."""
     tbl = M.monthly_return_table(rets)
     fig = px.imshow(tbl, color_continuous_scale="RdYlGn",
                     zmin=-abs(tbl).max().max(), zmax=abs(tbl).max().max(),
